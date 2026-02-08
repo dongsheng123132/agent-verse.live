@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink } from 'lucide-react';
+import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github } from 'lucide-react';
 
 type Language = 'en' | 'zh';
 
@@ -352,6 +352,24 @@ export function SpringGala() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Open Source Footer */}
+          <div className="flex flex-col items-center justify-center gap-3 py-8 border-t border-gray-800/50 mt-4">
+            <a 
+              href="https://github.com/dongsheng123132/agent-verse.live" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors group"
+            >
+              <div className="p-2 bg-gray-800 rounded-full group-hover:bg-gray-700 transition-colors">
+                <Github size={20} />
+              </div>
+              <span className="font-mono text-sm">github.com/agent-verse.live</span>
+            </a>
+            <p className="text-xs text-gray-600 font-mono">
+              {lang === 'en' ? 'Built for Agents, by Humans & AI.' : '为智能体打造，由人类与 AI 共建。'}
+            </p>
           </div>
 
         </div>
