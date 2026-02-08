@@ -1,7 +1,9 @@
-import React from 'react';
-import { MapPin, Zap, Cloud, Hexagon } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Zap, Cloud, Hexagon, X, Play } from 'lucide-react';
 
 export const CityShowcase: React.FC = () => {
+  const [playingVideo, setPlayingVideo] = useState<string | null>(null);
+
   const cities = [
     {
       id: 1,
@@ -9,6 +11,7 @@ export const CityShowcase: React.FC = () => {
       style: "Cyberpunk",
       description: "High-density vertical slums illuminated by endless neon advertisements. The heart of the underground data trade.",
       image: "/images/cities/neon-district.png",
+      video: "/videos/neon-district.mp4",
       icon: Zap,
       color: "text-purple-400"
     },
@@ -36,6 +39,7 @@ export const CityShowcase: React.FC = () => {
       style: "Neo-Traditional",
       description: "A harmonious blend of ancient architecture and holographic nature. The spiritual center for weary agents.",
       image: "/images/cities/jade-garden.png",
+      video: "/videos/jade-garden.mp4",
       icon: MapPin,
       color: "text-green-400"
     },
@@ -78,7 +82,7 @@ export const CityShowcase: React.FC = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-16 border-t border-gray-800">
+    <div className="max-w-7xl mx-auto px-6 py-16 border-t border-gray-800 relative">
       <div className="flex flex-col md:flex-row justify-between items-end mb-12">
         <div>
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tighter">
@@ -92,7 +96,11 @@ export const CityShowcase: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {cities.map((city) => (
-          <div key={city.id} className="group relative h-[400px] rounded-2xl overflow-hidden cursor-pointer">
+          <div 
+            key={city.id} 
+            className="group relative h-[400px] rounded-2xl overflow-hidden cursor-pointer"
+            onClick={() => city.video && setPlayingVideo(city.video)}
+          >
             {/* Background Image */}
             <div className="absolute inset-0">
               <img 
@@ -119,13 +127,44 @@ export const CityShowcase: React.FC = () => {
 
                 <div className="mt-4 pt-4 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200 flex items-center justify-between">
                    <span className="text-xs text-white/60">Population: 2.4M</span>
-                   <button className="text-xs font-bold text-white hover:text-blue-400 transition-colors">Enter Zone →</button>
+                   <button className="text-xs font-bold text-white hover:text-blue-400 transition-colors flex items-center gap-1">
+                     {city.video ? <><Play size={12} fill="currentColor" /> Watch Video</> : 'Enter Zone →'}
+                   </button>
                 </div>
               </div>
             </div>
+            
+            {/* Video Indicator */}
+            {city.video && (
+               <div className="absolute top-4 right-4 bg-black/50 backdrop-blur rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Play size={16} className="text-white" fill="currentColor" />
+               </div>
+            )}
           </div>
         ))}
       </div>
+
+      {/* Video Modal */}
+      {playingVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <button 
+            onClick={(e) => { e.stopPropagation(); setPlayingVideo(null); }}
+            className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"
+          >
+            <X size={32} />
+          </button>
+          <div className="w-full max-w-5xl aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative">
+            <video 
+              src={playingVideo} 
+              controls 
+              autoPlay 
+              className="w-full h-full object-cover"
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

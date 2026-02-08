@@ -97,16 +97,16 @@ export const WorldMap: React.FC = () => {
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row items-end justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-3xl font-light text-white mb-2 tracking-wide">CELESTIAL MAP // <span className="text-gray-500 font-mono text-xl">High-Fidelity Render</span></h2>
-          <p className="text-gray-400">Navigate the crystal spires and data oceans of the AgentVerse.</p>
+          <h2 className="text-3xl font-light text-white mb-2 tracking-wide">INFINITE GALAXY // <span className="text-gray-500 font-mono text-xl">Sector Exploration</span></h2>
+          <p className="text-gray-400">Explore the vast, procedural galaxy of AgentVerse. Select a star system to establish presence.</p>
         </div>
         <div className="flex gap-4 text-sm text-gray-500 font-mono">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span> UE5_STREAM: OFF</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400"></span> WEBGL_CORE: MAX</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span> GALAXY_SIM: ACTIVE</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400"></span> STARS: 50K+</span>
         </div>
       </div>
 
-      {/* 3D City Map Section */}
+      {/* 3D Galaxy Map Section */}
       <div className="mb-10 shadow-2xl shadow-blue-500/10 rounded-2xl border border-white/5">
         <ThreeCity zones={ZONES} onSelectZone={setSelectedZone} />
       </div>
@@ -135,7 +135,7 @@ export const WorldMap: React.FC = () => {
               <span className="flex items-center gap-1">
                 <Users size={10} /> {zone.activeAgents.toLocaleString()}
               </span>
-              <span>GRID: {zone.x},{zone.y}</span>
+              <span>COORDS: {zone.x},{zone.y}</span>
             </div>
           </div>
         ))}

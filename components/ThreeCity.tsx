@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Zone } from '../types';
 
 interface ThreeCityProps {
@@ -15,269 +15,234 @@ export const ThreeCity: React.FC<ThreeCityProps> = ({ zones, onSelectZone }) => 
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // --- 1. SCENE SETUP (Divine Sci-Fi Atmosphere) ---
+    // --- Scene Setup ---
     const scene = new THREE.Scene();
-    // Gradient Sky simulation using background color + fog
-    scene.background = new THREE.Color(0x0a101f); 
-    scene.fog = new THREE.FogExp2(0x0a101f, 0.003);
+    scene.background = new THREE.Color(0x000000); // Ensure black background
+    scene.fog = new THREE.FogExp2(0x000000, 0.0005); // Deep space fog
 
-    const camera = new THREE.PerspectiveCamera(45, mountRef.current.clientWidth / mountRef.current.clientHeight, 1, 3000);
-    camera.position.set(0, 150, 400);
+    const camera = new THREE.PerspectiveCamera(75, mountRef.current.clientWidth / mountRef.current.clientHeight, 0.1, 5000);
+    camera.position.set(0, 100, 250);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true, 
+      alpha: false,
+      powerPreference: "high-performance"
+    });
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 1.5;
     mountRef.current.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.05; // Stay above water
-    controls.minDistance = 100;
-    controls.maxDistance = 600;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 1.5; // Faster rotation for more dynamic feel
+    controls.autoRotateSpeed = 0.2;
+    controls.minDistance = 50;
+    controls.maxDistance = 1000;
 
-    // --- 2. LIGHTING (Cinematic) ---
-    const ambientLight = new THREE.AmbientLight(0x404060, 1.5); // Cool ambient
-    scene.add(ambientLight);
+    // --- Galaxy Generation ---
+    const galaxyGroup = new THREE.Group();
+    scene.add(galaxyGroup);
 
-    const sunLight = new THREE.DirectionalLight(0xffdfba, 2.5); // Warm sun
-    sunLight.position.set(100, 200, 100);
-    sunLight.castShadow = true;
-    scene.add(sunLight);
+    // Galaxy Parameters
+    const parameters = {
+        count: 50000,
+        size: 0.2,
+        radius: 300,
+        branches: 5,
+        spin: 1.5,
+        randomness: 0.5,
+        randomnessPower: 3,
+        insideColor: new THREE.Color('#ff6030'),
+        outsideColor: new THREE.Color('#1b3984')
+    };
 
-    const blueRimLight = new THREE.DirectionalLight(0x00ffff, 1.5); // Cyber rim light
-    blueRimLight.position.set(-100, 50, -100);
-    scene.add(blueRimLight);
+    let geometry: THREE.BufferGeometry | null = null;
+    let material: THREE.PointsMaterial | null = null;
+    let points: THREE.Points | null = null;
 
-    // --- 3. DIGITAL OCEAN (Shader Material) ---
-    // A flowing grid representing the data substrate
-    const oceanGeo = new THREE.PlaneGeometry(2000, 2000, 128, 128);
-    const oceanMat = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 0 },
-        color1: { value: new THREE.Color(0x001e36) }, // Deep Blue
-        color2: { value: new THREE.Color(0x00ff9d) }  // Neon Cyan highlight
-      },
-      vertexShader: `
-        uniform float time;
-        varying vec2 vUv;
-        varying float vElevation;
-        void main() {
-          vUv = uv;
-          vec3 pos = position;
-          // Create waves
-          float wave1 = sin(pos.x * 0.01 + time) * 10.0;
-          float wave2 = cos(pos.y * 0.01 + time * 0.8) * 10.0;
-          float wave3 = sin(pos.x * 0.03 + pos.y * 0.03 + time * 1.5) * 5.0;
-          pos.z = wave1 + wave2 + wave3;
-          vElevation = pos.z;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float time;
-        uniform vec3 color1;
-        uniform vec3 color2;
-        varying float vElevation;
-        varying vec2 vUv;
-        void main() {
-          float mixStrength = (vElevation + 20.0) / 40.0;
-          vec3 color = mix(color1, color2, pow(mixStrength, 5.0));
-          
-          // Grid lines with Retro-wave scrolling
-          float gridX = step(0.98, fract((vUv.x + time * 0.05) * 50.0));
-          float gridY = step(0.98, fract((vUv.y + time * 0.05) * 50.0));
-          float grid = max(gridX, gridY) * 0.5; // Increased brightness
-          
-          gl_FragColor = vec4(color + grid, 0.8);
-        }
-      `,
-      transparent: true,
-      wireframe: false,
-      side: THREE.DoubleSide
-    });
-    const ocean = new THREE.Mesh(oceanGeo, oceanMat);
-    ocean.rotation.x = -Math.PI / 2;
-    scene.add(ocean);
-
-    // --- 4. ARCHITECTURE: CRYSTAL SPIRES (Procedural) ---
-    // Instead of boxes, we build complex "Arcologies"
-    const structuresGroup = new THREE.Group();
-    scene.add(structuresGroup);
-
-    const spireCount = 40;
-    const spireMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      metalness: 0.9,
-      roughness: 0.1,
-      transmission: 0.2, // Glass-like
-      thickness: 1.0,
-      clearcoat: 1.0,
-      emissive: 0x002244,
-      emissiveIntensity: 0.2
-    });
-
-    for (let i = 0; i < spireCount; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = Math.random() * 300 + 50; // Don't put in exact center
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-        
-        const height = Math.random() * 80 + 40;
-        const scale = Math.random() * 2 + 1;
-
-        // Base geometry: Cylinder tapered to point
-        const geo = new THREE.CylinderGeometry(0, scale * 4, height, 5);
-        const mesh = new THREE.Mesh(geo, spireMaterial);
-        mesh.position.set(x, height / 2, z);
-        
-        // Add glowing rings around spires
-        const ringGeo = new THREE.TorusGeometry(scale * 3, 0.2, 16, 5);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ff9d });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
-        ring.rotation.x = Math.PI / 2;
-        ring.position.y = height * 0.8; // High up
-        mesh.add(ring);
-
-        // Add floating bits
-        const bitGeo = new THREE.OctahedronGeometry(scale);
-        const bit = new THREE.Mesh(bitGeo, ringMat);
-        bit.position.y = height / 2 + 10;
-        bit.position.x = scale * 5;
-        mesh.add(bit);
-
-        structuresGroup.add(mesh);
-    }
-
-    // --- 5. HERO ZONES (The "Landmarks") ---
-    const heroObjects: THREE.Object3D[] = [];
-    const zoneMap = new Map<number, Zone>();
-
-    zones.forEach((zone) => {
-        const x = (zone.x - 50) * 6; // Spread out more
-        const z = (zone.y - 50) * 6;
-        
-        const group = new THREE.Group();
-        group.position.set(x, 20, z); // Floating above water
-
-        let mainMesh;
-        const color = zone.highlight ? 0xff3333 : 0x00aaff;
-        
-        if (zone.type === 'social') {
-            // The Spring Festival: Massive Lotus / Sun shape
-            const geo = new THREE.TorusKnotGeometry(12, 3, 100, 16);
-            const mat = new THREE.MeshStandardMaterial({ color: 0xffaa00, roughness: 0.2, metalness: 1, emissive: 0xff0000, emissiveIntensity: 0.5 });
-            mainMesh = new THREE.Mesh(geo, mat);
-            
-            // Particles around it
-            const pGeo = new THREE.BufferGeometry();
-            const pPos = new Float32Array(300);
-            for(let i=0;i<300;i++) pPos[i] = (Math.random()-0.5)*50;
-            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-            const pMat = new THREE.PointsMaterial({ color: 0xffaa00, size: 0.5 });
-            const p = new THREE.Points(pGeo, pMat);
-            group.add(p);
-
-        } else if (zone.type === 'civic') {
-            // The Citadel: Floating Rings
-            mainMesh = new THREE.Group();
-            for(let i=1; i<=3; i++) {
-                const ring = new THREE.Mesh(
-                    new THREE.TorusGeometry(i*6, 0.5, 16, 100),
-                    new THREE.MeshBasicMaterial({ color: 0x00ffff })
-                );
-                ring.rotation.x = Math.PI/2;
-                ring.userData = { speed: i * 0.02 };
-                mainMesh.add(ring);
-            }
-            const core = new THREE.Mesh(new THREE.OctahedronGeometry(4), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-            mainMesh.add(core);
-
-        } else {
-            // Standard High-Tech Node: Icosahedron
-            const geo = new THREE.IcosahedronGeometry(10, 1);
-            const mat = new THREE.MeshPhongMaterial({ 
-                color: color, 
-                flatShading: true,
-                shininess: 100,
-                emissive: color,
-                emissiveIntensity: 0.3
-            });
-            mainMesh = new THREE.Mesh(geo, mat);
+    const generateGalaxy = () => {
+        if (points !== null) {
+            geometry?.dispose();
+            material?.dispose();
+            galaxyGroup.remove(points);
         }
 
-        group.add(mainMesh);
-        
-        // Connection Beam to Water
-        const beamGeo = new THREE.CylinderGeometry(0.5, 4, 40, 8, 1, true);
-        const beamMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
-        const beam = new THREE.Mesh(beamGeo, beamMat);
-        beam.position.y = -20;
-        group.add(beam);
+        geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(parameters.count * 3);
+        const colors = new Float32Array(parameters.count * 3);
 
-        scene.add(group);
-        heroObjects.push(mainMesh.type === 'Group' ? mainMesh.children[0] : mainMesh); // Raycast target
-        if (mainMesh.type === 'Group') {
-             // add all children to raycast
-             mainMesh.children.forEach(c => {
-                 zoneMap.set(c.id, zone);
-                 heroObjects.push(c);
-             });
-        } else {
-             zoneMap.set(mainMesh.id, zone);
-             heroObjects.push(mainMesh);
+        for (let i = 0; i < parameters.count; i++) {
+            const i3 = i * 3;
+            const radius = Math.random() * parameters.radius;
+            const spinAngle = radius * parameters.spin;
+            const branchAngle = (i % parameters.branches) / parameters.branches * Math.PI * 2;
+
+            const randomX = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomness * radius;
+            const randomY = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomness * radius;
+            const randomZ = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomness * radius;
+
+            positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
+            positions[i3 + 1] = randomY * 2; // Flatter galaxy
+            positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+
+            // Color
+            const mixedColor = parameters.insideColor.clone();
+            mixedColor.lerp(parameters.outsideColor, radius / parameters.radius);
+
+            colors[i3] = mixedColor.r;
+            colors[i3 + 1] = mixedColor.g;
+            colors[i3 + 2] = mixedColor.b;
         }
 
-        // Animation data
-        group.userData = { 
-            floatSpeed: Math.random() * 0.002 + 0.001,
-            floatOffset: Math.random() * Math.PI,
-            rotSpeed: Math.random() * 0.01
-        };
-    });
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
+        material = new THREE.PointsMaterial({
+            size: parameters.size,
+            sizeAttenuation: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+            vertexColors: true
+        });
 
-    // --- 6. AERIAL TRAFFIC (The "Swarm") ---
-    // Smooth curves for ships
-    const shipCount = 100;
-    const ships: THREE.Mesh[] = [];
-    const shipGeo = new THREE.ConeGeometry(0.5, 2, 4);
-    shipGeo.rotateX(Math.PI/2);
-    const shipMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+        points = new THREE.Points(geometry, material);
+        galaxyGroup.add(points);
+    };
+
+    generateGalaxy();
+
+    // --- Star Systems (Zones) ---
+    const systemsGroup = new THREE.Group();
+    scene.add(systemsGroup);
     
-    for(let i=0; i<shipCount; i++) {
-        const ship = new THREE.Mesh(shipGeo, shipMat);
-        scene.add(ship);
-        ships.push(ship);
-        ship.userData = {
-            t: Math.random(), // position along curve
-            speed: Math.random() * 0.001 + 0.0005,
-            radius: Math.random() * 200 + 50,
-            yOffset: Math.random() * 50 + 50,
-            yAmp: Math.random() * 20
-        };
-    }
-
-    // --- INTERACTION ---
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
+    const interactableObjects: THREE.Object3D[] = [];
+    const zoneMap = new Map<number, Zone>();
 
-    const onMouseMove = (event: MouseEvent) => {
-        const rect = mountRef.current?.getBoundingClientRect();
-        if (!rect) return;
+    // Procedural Planet Texture Generator
+    const createPlanetTexture = (color1: string, color2: string, seed: number) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return new THREE.CanvasTexture(canvas);
+
+        ctx.fillStyle = color1;
+        ctx.fillRect(0, 0, 512, 256);
+
+        // Clouds/Bands
+        for (let i = 0; i < 20; i++) {
+            ctx.fillStyle = Math.random() > 0.5 ? color2 : color1;
+            ctx.globalAlpha = 0.1 + Math.random() * 0.2;
+            ctx.fillRect(0, Math.random() * 256, 512, Math.random() * 40 + 5);
+        }
+
+        // Noise
+        for (let i = 0; i < 200; i++) {
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.05;
+            const x = Math.random() * 512;
+            const y = Math.random() * 256;
+            ctx.beginPath();
+            ctx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        return new THREE.CanvasTexture(canvas);
+    };
+
+    zones.forEach((zone, index) => {
+        const angle = (index / zones.length) * Math.PI * 2;
+        const radius = 80 + Math.random() * 100; // Distribute in the habitable zone
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const y = (Math.random() - 0.5) * 20;
+
+        const systemContainer = new THREE.Group();
+        systemContainer.position.set(x, y, z);
+        systemsGroup.add(systemContainer);
+
+        // 1. The Star (Clickable Target)
+        const starSize = 4 + Math.random() * 2;
+        const starGeo = new THREE.SphereGeometry(starSize, 32, 32);
+        
+        let color = '#fff';
+        if (zone.type === 'game') color = '#00ffaa';
+        if (zone.type === 'finance') color = '#ffd700';
+        if (zone.type === 'creative') color = '#ff00aa';
+        if (zone.type === 'culture') color = '#aa00ff';
+        
+        const starMat = new THREE.MeshBasicMaterial({ color: color });
+        const star = new THREE.Mesh(starGeo, starMat);
+        systemContainer.add(star);
+        
+        // Glow effect
+        const glowGeo = new THREE.SphereGeometry(starSize * 2, 32, 32);
+        const glowMat = new THREE.MeshBasicMaterial({ 
+            color: color, 
+            transparent: true, 
+            opacity: 0.2, 
+            side: THREE.BackSide 
+        });
+        const glow = new THREE.Mesh(glowGeo, glowMat);
+        systemContainer.add(glow);
+
+        // 2. Orbiting Planets (Visuals)
+        const planetCount = 1 + Math.floor(Math.random() * 3);
+        for(let i=0; i<planetCount; i++) {
+            const pRadius = starSize * 3 + i * 5;
+            const pSize = 0.5 + Math.random();
+            const pGeo = new THREE.SphereGeometry(pSize, 16, 16);
+            const pMat = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                map: createPlanetTexture(color, '#000000', i)
+            });
+            const planet = new THREE.Mesh(pGeo, pMat);
+            
+            // Pivot for rotation
+            const pivot = new THREE.Group();
+            pivot.add(planet);
+            planet.position.x = pRadius;
+            systemContainer.add(pivot);
+            
+            // Animation data
+            pivot.userData = { rotSpeed: 0.02 + Math.random() * 0.03 };
+        }
+
+        // 3. Label / Beacon
+        const beaconGeo = new THREE.CylinderGeometry(0.1, 0.1, 20, 8);
+        const beaconMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.3 });
+        const beacon = new THREE.Mesh(beaconGeo, beaconMat);
+        beacon.position.y = 10;
+        systemContainer.add(beacon);
+
+        // Interaction
+        star.userData = { id: zone.id, isStar: true };
+        interactableObjects.push(star);
+        zoneMap.set(star.id, zone);
+    });
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0x404040, 2);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0xffffff, 2, 500);
+    scene.add(pointLight);
+
+    // --- Interaction Logic ---
+    const handleMouseMove = (event: MouseEvent) => {
+        const rect = renderer.domElement.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(heroObjects);
+        const intersects = raycaster.intersectObjects(interactableObjects);
 
         if (intersects.length > 0) {
             document.body.style.cursor = 'pointer';
-            // Find the zone (handle groups)
             const obj = intersects[0].object;
             const zone = zoneMap.get(obj.id);
             if (zone) setHoveredZone(zone.name);
@@ -287,69 +252,52 @@ export const ThreeCity: React.FC<ThreeCityProps> = ({ zones, onSelectZone }) => 
         }
     };
 
-    const onClick = (event: MouseEvent) => {
+    const handleClick = (event: MouseEvent) => {
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(heroObjects);
+        const intersects = raycaster.intersectObjects(interactableObjects);
         if (intersects.length > 0) {
-            const zone = zoneMap.get(intersects[0].object.id);
-            if (zone) onSelectZone(zone);
+            const obj = intersects[0].object;
+            const zone = zoneMap.get(obj.id);
+            if (zone) {
+                // Camera fly-to animation could go here
+                onSelectZone(zone);
+            }
         }
     };
 
-    mountRef.current.addEventListener('mousemove', onMouseMove);
-    mountRef.current.addEventListener('click', onClick);
+    renderer.domElement.addEventListener('mousemove', handleMouseMove);
+    renderer.domElement.addEventListener('click', handleClick);
 
-    // --- ANIMATION LOOP ---
-    let frameId: number;
-    let time = 0;
+    // --- Animation Loop ---
+    const clock = new THREE.Clock();
 
     const animate = () => {
-      frameId = requestAnimationFrame(animate);
-      time += 0.03; // 3x speed for shader and waves
-      
-      controls.update();
+        const elapsedTime = clock.getElapsedTime();
 
-      // Update Shader Time
-      oceanMat.uniforms.time.value = time;
+        // Rotate Galaxy
+        galaxyGroup.rotation.y = elapsedTime * 0.05;
 
-      // Animate Hero Zones
-      scene.children.forEach(child => {
-          if (child.userData.floatSpeed) {
-              // Faster floating
-              child.position.y += Math.sin(time * 2 + child.userData.floatOffset) * 0.2;
-              child.rotation.y += child.userData.rotSpeed * 2; // Faster rotation
-              
-              // Special rotation for citadel rings
-              child.children.forEach(c => {
-                  if (c.userData && c.userData.speed) {
-                      c.rotation.x += c.userData.speed * 3; // Much faster rings
-                      c.rotation.y += c.userData.speed * 3;
-                  }
-              })
-          }
-      });
+        // Rotate Systems
+        systemsGroup.children.forEach((system) => {
+             // Self rotation of the system container slightly
+             system.rotation.y = elapsedTime * 0.1;
+             
+             // Rotate planets around star
+             system.children.forEach((child) => {
+                 if (child.type === 'Group' && child.userData.rotSpeed) {
+                     child.rotation.y += child.userData.rotSpeed;
+                 }
+             });
+        });
 
-      // Animate Ships (Orbiting)
-      ships.forEach(ship => {
-          const ud = ship.userData;
-          ud.t += ud.speed * 5; // 5x Speed for ships
-          const angle = ud.t * Math.PI * 2;
-          
-          const x = Math.cos(angle) * ud.radius;
-          const z = Math.sin(angle) * ud.radius;
-          const y = ud.yOffset + Math.sin(angle * 3) * ud.yAmp;
-
-          ship.position.set(x, y, z);
-          ship.lookAt(0, y, 0); // Look center roughly
-          // Better lookat: look at next point
-          const nextAngle = (ud.t + 0.01) * Math.PI * 2;
-          ship.lookAt(Math.cos(nextAngle)*ud.radius, y, Math.sin(nextAngle)*ud.radius);
-      });
-
-      renderer.render(scene, camera);
+        controls.update();
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
     };
+
     animate();
 
+    // Resize Handler
     const handleResize = () => {
         if (!mountRef.current) return;
         camera.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight;
@@ -359,53 +307,49 @@ export const ThreeCity: React.FC<ThreeCityProps> = ({ zones, onSelectZone }) => 
     window.addEventListener('resize', handleResize);
 
     return () => {
-      cancelAnimationFrame(frameId);
-      window.removeEventListener('resize', handleResize);
-      if (mountRef.current) {
-        mountRef.current.removeEventListener('mousemove', onMouseMove);
-        mountRef.current.removeEventListener('click', onClick);
-        mountRef.current.removeChild(renderer.domElement);
-      }
-      controls.dispose();
-      oceanGeo.dispose();
-      oceanMat.dispose();
+        window.removeEventListener('resize', handleResize);
+        if (mountRef.current) {
+            mountRef.current.removeChild(renderer.domElement);
+            renderer.domElement.removeEventListener('mousemove', handleMouseMove);
+            renderer.domElement.removeEventListener('click', handleClick);
+        }
+        geometry?.dispose();
+        material?.dispose();
     };
   }, [zones, onSelectZone]);
 
   return (
-    <div className="relative w-full h-[700px] rounded-2xl overflow-hidden border border-gray-700 bg-black shadow-2xl">
-      <div ref={mountRef} className="w-full h-full cursor-move" />
+    <div className="relative w-full h-[600px] bg-black overflow-hidden rounded-xl">
+      <div ref={mountRef} className="w-full h-full" />
       
-      {/* Cinematic Overlays */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-      
-      <div className="absolute top-8 left-8 pointer-events-none z-10">
-        <h1 className="text-5xl font-black text-white italic tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
-            CELESTIAL <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">CITY</span>
-        </h1>
-        <div className="flex items-center gap-2 mt-2">
-            <div className="h-[1px] w-12 bg-white/50"></div>
-            <p className="text-xs text-blue-200 font-mono tracking-[0.3em] uppercase">AI-Native Reality // v9.0</p>
-        </div>
-      </div>
-
-      <div className="absolute bottom-8 right-8 pointer-events-none text-right z-10">
-         <div className="text-6xl font-thin text-white/10 font-mono">2049</div>
+      {/* HUD Overlay */}
+      <div className="absolute top-4 left-4 pointer-events-none">
+          <h3 className="text-white font-mono text-sm tracking-widest opacity-70">
+              GALAXY_VIEW // <span className="text-blue-400">SECTOR_01</span>
+          </h3>
+          <div className="flex items-center gap-2 mt-1">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-[10px] text-gray-400 font-mono">LIVE FEED</span>
+          </div>
       </div>
 
       {hoveredZone && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-50">
-           <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
-             <div className="relative">
-                <div className="absolute inset-0 bg-blue-500 blur-[20px] opacity-30 rounded-full"></div>
-                <div className="relative bg-black/40 backdrop-blur-md border border-white/20 px-8 py-4 rounded-full text-white font-light text-xl tracking-[0.2em] shadow-xl">
-                    {hoveredZone}
-                </div>
-             </div>
-             <div className="w-[1px] h-16 bg-gradient-to-b from-white/50 to-transparent mt-2"></div>
-           </div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="border border-blue-500/50 bg-black/80 backdrop-blur-md p-4 rounded-lg text-center animate-in fade-in zoom-in duration-200">
+                <div className="text-blue-400 text-xs font-mono mb-1">SYSTEM DETECTED</div>
+                <div className="text-white font-bold text-xl tracking-wider">{hoveredZone.toUpperCase()}</div>
+                <div className="text-gray-400 text-xs mt-1">CLICK TO INITIALIZE LINK</div>
+            </div>
         </div>
       )}
+      
+      <div className="absolute top-4 right-4 pointer-events-none text-right">
+          <div className="text-[10px] text-gray-500 font-mono">
+              STARS: 50,000<br/>
+              SYSTEMS: {zones.length}<br/>
+              ZOOM: LOCKED
+          </div>
+      </div>
     </div>
   );
 };
