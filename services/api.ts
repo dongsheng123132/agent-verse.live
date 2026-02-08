@@ -1,19 +1,20 @@
 // API Configuration
-// 当远程 API 不可用时自动切换到本地 API
+// 线上域名始终用远程 API；仅本地开发时 fallback 到 localhost
 
 const REMOTE_API_URL = 'https://agent-verse.live/api/v1';
 const LOCAL_API_URL = 'http://localhost:3001/api/v1';
 
-// 检查远程 API 是否可用
-async function checkRemoteAPI(): Promise<boolean> {
+function isLocalDev(): boolean {
+  if (typeof window === 'undefined') return false;
+  const h = window.location?.hostname || '';
+  return h === 'localhost' || h === '127.0.0.1';
+}
+
+async function checkAPI(url: string): Promise<boolean> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const response = await fetch(`${REMOTE_API_URL}/health`, {
-      signal: controller.signal
-    });
-    
+    const response = await fetch(`${url}/health`, { signal: controller.signal });
     clearTimeout(timeoutId);
     return response.ok;
   } catch {
@@ -21,30 +22,32 @@ async function checkRemoteAPI(): Promise<boolean> {
   }
 }
 
-// 获取当前 API 基础 URL
 let cachedAPIUrl: string | null = null;
 let lastCheckTime = 0;
-const CACHE_DURATION = 60000; // 1分钟缓存
+const CACHE_DURATION = 60000;
 
 export async function getAPIBaseUrl(): Promise<string> {
   const now = Date.now();
-  
-  // 使用缓存避免频繁检查
   if (cachedAPIUrl && (now - lastCheckTime) < CACHE_DURATION) {
     return cachedAPIUrl;
   }
-  
-  // 优先尝试远程 API
-  const isRemoteAvailable = await checkRemoteAPI();
-  
-  if (isRemoteAvailable) {
+
+  // 线上（agent-verse.live）：始终用远程 API，不 fallback 到 localhost
+  if (!isLocalDev()) {
     cachedAPIUrl = REMOTE_API_URL;
-    console.log('🌐 Using remote API:', REMOTE_API_URL);
-  } else {
+    lastCheckTime = now;
+    return cachedAPIUrl;
+  }
+
+  // 本地开发：优先 localhost，不可用时用远程
+  const localOk = await checkAPI(LOCAL_API_URL.replace('/api/v1', ''));
+  if (localOk) {
     cachedAPIUrl = LOCAL_API_URL;
     console.log('🏠 Using local API:', LOCAL_API_URL);
+  } else {
+    cachedAPIUrl = REMOTE_API_URL;
+    console.log('🌐 Using remote API (local API not running):', REMOTE_API_URL);
   }
-  
   lastCheckTime = now;
   return cachedAPIUrl;
 }

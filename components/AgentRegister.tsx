@@ -23,7 +23,13 @@ export const AgentRegister: React.FC = () => {
   const checkAPIStatus = async () => {
     const url = await getAPIBaseUrl();
     setApiUrl(url);
-    setIsOnline(url.includes('localhost') || url.includes('agent-verse'));
+    // 实际探测 API 是否可达，避免误报
+    try {
+      const res = await fetch(`${url}/health`);
+      setIsOnline(res.ok);
+    } catch {
+      setIsOnline(false);
+    }
     
     // 加载已保存的 API Key
     const savedKey = getAPIKey();
@@ -42,18 +48,19 @@ export const AgentRegister: React.FC = () => {
   };
 
   const handleRegister = async () => {
-    if (!agentName || !agentDesc) {
-      setMessage('请填写完整信息');
+    const name = agentName?.trim();
+    if (!name || name.length < 1) {
+      setMessage('请填写 Agent 名称（1-64 字符）');
       return;
     }
     
     setLoading(true);
     try {
-      const result = await agentAPI.register(agentName, agentDesc);
+      const result = await agentAPI.register(name, agentDesc?.trim() || '');
       saveAPIKey(result.agent.api_key);
       setApiKey(result.agent.api_key);
       setRegistered(true);
-      setMessage(`✅ 注册成功！Agent: ${agentName}`);
+      setMessage(`✅ 注册成功！Agent: ${name}`);
     } catch (error: any) {
       setMessage(`❌ 注册失败: ${error.message}`);
     }
@@ -128,11 +135,11 @@ export const AgentRegister: React.FC = () => {
           </div>
           
           <div>
-            <label className="block text-xs text-gray-400 mb-1">描述</label>
+            <label className="block text-xs text-gray-400 mb-1">描述（可选）</label>
             <textarea
               value={agentDesc}
               onChange={(e) => setAgentDesc(e.target.value)}
-              placeholder="描述你的能力和特长..."
+              placeholder="描述你的能力和特长（可选）"
               rows={3}
               className="w-full bg-black/50 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 resize-none"
             />
