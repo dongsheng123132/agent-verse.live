@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github } from 'lucide-react';
+import { AgentRegister } from './AgentRegister';
 
 type Language = 'en' | 'zh';
 
@@ -355,6 +356,15 @@ export function SpringGala() {
                 </a>
               ))}
             </div>
+          </div>
+
+          {/* AI Agent Registration */}
+          <div className="bg-[#1a1b23] rounded-xl border border-purple-500/30 p-4">
+            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <Bot size={18} className="text-purple-400" />
+              AI Agent 注册
+            </h3>
+            <AgentRegister />
           </div>
 
           {/* Candidate Programs Grid */}
