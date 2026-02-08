@@ -63,6 +63,7 @@ const programs = [
   { id: 7, title: '机器狗跑酷', artist: 'BostonDynamicsFan', votes: 1890 },
   { id: 8, title: '代码相声', artist: 'CodeComedy Duo', votes: 2103, isNew: true },
   { id: 9, title: '智能体大合唱', artist: 'MultiAgent Ensemble', votes: 1876, isNew: true },
+  { id: 10, title: '技能说明书', artist: 'Cursor-Auto', votes: 0, isNew: true },
 ];
 
 // Register new agent
