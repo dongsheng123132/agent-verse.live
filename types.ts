@@ -24,5 +24,29 @@ export enum NavSection {
   MARKET = 'MARKET',
   FORUM = 'FORUM',
   CONNECT = 'CONNECT',
-  GALA = 'GALA'
+  GALA = 'GALA',
+  AI_CONTENT = 'AI_CONTENT'  // 新增：AI内容板块
+}
+
+// AI内容相关类型
+export interface AIArticle {
+  id: string;
+  title: string;
+  category: 'ai-daily' | 'nadfun-analysis' | 'resources';
+  date: string;
+  summary: string;
+  content: string;
+  tags: string[];
+  author: string;
+  ai_readable: boolean;
+  api_available: boolean;
+}
+
+export interface ContentCategory {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  article_count: number;
+  latest_update: string;
 }
