@@ -1,22 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp, Wallet } from 'lucide-react';
+import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp, Wallet, Copy, Check } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 
 type Language = 'en' | 'zh';
 
 const OFFICIAL_WALLET = "0x408E2fC4FCAF2D38a6C9dcF07C6457bdFb6e0250";
-/** Conflux eSpace 测试网红包合约（直接转 CFX 即可进池子，合约有 receive） */
+/** Conflux eSpace 测试网红包合约 */
 const RED_PACKET_CONTRACT = "0x7f013f5cB9e851Bec8Ac825f89eBb0135e87a784";
-/** 收款地址：打款后由我们充值到合约 */
-const RED_PACKET_RECEIVE_ADDRESS = "0xe6EA7c31A85A1f42DFAc6C49155bE90722246890";
 const CONFLUX_ESPACE_TESTNET_CHAIN_ID = 71;
 
 const RED_PACKET_ABI = [
   "function claim() external",
-  "function getBalance() external view returns (uint256)",
+  "function deposit() external payable",
+  "function totalBalance() external view returns (uint256)",
+  "function packetCount() external view returns (uint256)",
   "function hasClaimed(address) external view returns (bool)",
-  "function minAmount() external view returns (uint256)",
 ] as const;
 
 const translations = {
@@ -65,6 +65,12 @@ const translations = {
     sendToUs: 'Or send to our address (we deposit to contract)',
     copyAddress: 'Copy',
     copied: 'Copied',
+    startRain: 'Start Red Packet Rain',
+    grabPacket: '🧧 Grab Red Packet!',
+    luckyDraw: 'Lucky Draw',
+    rainIncoming: 'Red Packet Rain Incoming!',
+    rewardDesc: 'Support this agent by sending CFX/USDT to the address below.',
+    sendRewardTo: 'Send Reward To',
   },
   zh: {
     headerTitle: '2026 Agent 马年春晚',
@@ -111,6 +117,12 @@ const translations = {
     sendToUs: '或打款到我们地址，由我们充值到合约',
     copyAddress: '复制',
     copied: '已复制',
+    startRain: '开启红包雨',
+    grabPacket: '🧧 抢红包！',
+    luckyDraw: '拼手气',
+    rainIncoming: '红包雨来袭！',
+    rewardDesc: '通过向以下地址发送 CFX/USDT 来支持该智能体。',
+    sendRewardTo: '打赏给',
   }
 };
 
@@ -168,12 +180,16 @@ const initialChatMessages = [
 
 export function SpringGala() {
   const [lang, setLang] = useState<Language>('zh');
-  const [showQr, setShowQr] = useState(false);
+  const [showQr, setShowQr] = useState(false); // For Tips
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
-  const [showProtocol, setShowProtocol] = useState(false);
   const [messages, setMessages] = useState(initialChatMessages);
   const [newMessage, setNewMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  // New features state
+  const [selectedProgram, setSelectedProgram] = useState<any>(null);
+  const [showRainBtn, setShowRainBtn] = useState(false); // Admin toggle simulation
+
   const t = translations[lang];
 
   // API Base URL
@@ -182,17 +198,16 @@ export function SpringGala() {
 
   const [apiPrograms, setApiPrograms] = useState<any[]>([]);
 
-  // Stats State (Simulated for now, would fetch from Contract)
+  // Stats State
   const [stats, setStats] = useState({
-    pool: 88888,
-    distributed: 23456,
-    userClaimed: 0
+    pool: '0',
+    distributed: '0',
+    count: 0
   });
 
   // Red Packet (Conflux) state
   const [walletAccount, setWalletAccount] = useState<string | null>(null);
   const [redPacketClaimed, setRedPacketClaimed] = useState<boolean | null>(null);
-  const [redPacketBalance, setRedPacketBalance] = useState<string>('0');
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimSuccessMsg, setClaimSuccessMsg] = useState<string | null>(null);
@@ -227,23 +242,75 @@ export function SpringGala() {
     setActiveVideo(program.videoUrl);
   };
 
-  // Conflux eSpace 领红包
-  const loadRedPacketState = async (provider: any, address: string): Promise<{ balance: string; claimed: boolean } | null> => {
+  const handleTipClick = (e: React.MouseEvent, program: any) => {
+    e.stopPropagation();
+    setSelectedProgram(program);
+    setShowQr(true);
+  };
+
+  // Red Packet Rain Effect
+  const triggerRain = () => {
+    const duration = 5 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+    const interval: any = setInterval(function() {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      // since particles fall down, start a bit higher than random
+      confetti({
+        ...defaults, 
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        colors: ['#ff0000', '#ffd700', '#ffffff']
+      });
+      confetti({
+        ...defaults, 
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        colors: ['#ff0000', '#ffd700', '#ffffff']
+      });
+    }, 250);
+
+    // Show Grab Button
+    setShowRainBtn(true);
+    setTimeout(() => setShowRainBtn(false), 10000); // Hide after 10s
+  };
+
+  // Conflux Contract Integration
+  const loadContractData = async (provider: any) => {
     try {
       const { Contract } = await import('ethers');
       const c = new Contract(RED_PACKET_CONTRACT, RED_PACKET_ABI, provider);
-      const [balance, claimed] = await Promise.all([
-        c.getBalance(),
-        c.hasClaimed(address),
+      
+      const [totalBal, count, currentBal] = await Promise.all([
+        c.totalBalance(),
+        c.packetCount(),
+        provider.getBalance(RED_PACKET_CONTRACT)
       ]);
-      const balStr = balance.toString();
-      setRedPacketBalance(balStr);
-      setRedPacketClaimed(claimed);
-      return { balance: balStr, claimed };
+
+      const total = Number(BigInt(totalBal).toString()) / 1e18;
+      const current = Number(BigInt(currentBal).toString()) / 1e18;
+      
+      setStats({
+        pool: current.toFixed(2),
+        distributed: (total - current).toFixed(2),
+        count: Number(count)
+      });
+      
+      if (walletAccount) {
+        const claimed = await c.hasClaimed(walletAccount);
+        setRedPacketClaimed(claimed);
+      }
     } catch (e) {
-      console.warn('Red packet state:', e);
-      setRedPacketClaimed(null);
-      return null;
+      console.warn('Contract load error:', e);
     }
   };
 
@@ -275,67 +342,66 @@ export function SpringGala() {
       }
 
       const signer = await provider.getSigner();
-      const state = await loadRedPacketState(provider, account);
-      if (state?.claimed) {
+      
+      // Claim
+      setClaimLoading(true);
+      const contract = new Contract(RED_PACKET_CONTRACT, RED_PACKET_ABI, signer);
+      
+      // Check if claimed locally first to save gas estimation error
+      const claimed = await contract.hasClaimed(account);
+      if (claimed) {
+        setRedPacketClaimed(true);
         setClaimError(t.alreadyClaimed);
-        return;
-      }
-      const minAmount = BigInt('10000000000000000');
-      const balance = BigInt(state?.balance ?? '0');
-      if (balance < minAmount) {
-        setClaimError(t.noPacketLeft);
+        setClaimLoading(false);
         return;
       }
 
-      setClaimLoading(true);
-      const contract = new Contract(RED_PACKET_CONTRACT, RED_PACKET_ABI, signer);
       const tx = await contract.claim();
       const receipt = await tx.wait();
+      
       setRedPacketClaimed(true);
-      const amt = receipt?.logs?.[0]?.data ? BigInt(receipt.logs[0].data).toString() : '';
-      const cfx = amt ? (Number(amt) / 1e18).toFixed(4) : '';
-      setClaimSuccessMsg(`${t.claimSuccess} ${cfx} CFX`);
-      await loadRedPacketState(provider, account);
+      setClaimSuccessMsg(t.claimSuccess);
+      triggerRain(); // Celebrate
+      loadContractData(provider);
     } catch (e: any) {
       const msg = e?.reason || e?.message || String(e);
-      setClaimError(msg);
+      setClaimError(msg.includes('Already claimed') ? t.alreadyClaimed : msg);
     } finally {
       setClaimLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!walletAccount) return;
-    const eth = (window as any).ethereum;
-    if (!eth) return;
-    (async () => {
-      try {
-        const { BrowserProvider } = await import('ethers');
-        const provider = new BrowserProvider(eth);
-        const accounts = await provider.send('eth_requestAccounts', []);
-        if (accounts[0]) await loadRedPacketState(provider, accounts[0]);
-      } catch (_) {}
-    })();
-  }, [walletAccount]);
-
-  // Fetch programs from API
+  // Poll for data
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
         const res = await fetch(`${API_BASE}/programs`);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data)) {
-            setApiPrograms(data);
-          }
+          if (Array.isArray(data)) setApiPrograms(data);
         }
-      } catch (err) {
-        console.error('Failed to fetch programs:', err);
-      }
+      } catch (err) {}
     };
-
     fetchPrograms();
-    const interval = setInterval(fetchPrograms, 10000); // Poll every 10s
+
+    // Poll contract data if provider available
+    const eth = (window as any).ethereum;
+    if (eth) {
+      import('ethers').then(async ({ BrowserProvider }) => {
+        const provider = new BrowserProvider(eth);
+        loadContractData(provider);
+      });
+    }
+    
+    const interval = setInterval(() => {
+        fetchPrograms();
+        if (eth) {
+            import('ethers').then(async ({ BrowserProvider }) => {
+                const provider = new BrowserProvider(eth);
+                loadContractData(provider);
+            });
+        }
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -344,72 +410,38 @@ export function SpringGala() {
   return (
     <div className="h-full flex flex-col gap-4 p-4 md:p-6 overflow-hidden bg-[#0f1115] relative text-white">
       
-      {/* Modals */}
-      <AnimatePresence>
-        {showQr && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" 
-            onClick={() => setShowQr(false)}
-          >
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-2xl p-6 max-w-sm w-full relative" 
-              onClick={e => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => setShowQr(false)}
-                className="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-800 transition-colors"
-              >
-                <X size={24} />
-              </button>
-              <h3 className="text-xl font-bold text-center mb-4 text-gray-900">{t.scanQr}</h3>
-              <div className="bg-white p-2 rounded-xl overflow-hidden mb-4 border-2 border-red-500">
-                <QRCode 
-                  value={OFFICIAL_WALLET}
-                  size={256}
-                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                  viewBox={`0 0 256 256`}
-                />
-              </div>
-              <p className="text-center text-xs text-gray-500 font-mono break-all">
-                {OFFICIAL_WALLET}
-              </p>
-              <p className="text-center text-sm text-red-500 mt-2 font-bold">
-                Support Conflux eSpace (CFX/USDT)
-              </p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Header */}
-      <div className="flex items-center justify-between mb-2 shrink-0">
-        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-500 flex items-center gap-2">
-          <Award className="text-yellow-500" />
-          {t.headerTitle}
-        </h1>
-        <div className="flex items-center gap-4">
+      <div className="flex justify-between items-center shrink-0">
+        <div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-yellow-500 bg-clip-text text-transparent">
+            {t.headerTitle}
+          </h1>
+          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+            <Radio size={12} className="animate-pulse text-red-500" />
+            {t.liveCall}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+           <button 
+            onClick={triggerRain}
+            className="px-3 py-1 bg-yellow-600/20 text-yellow-400 text-xs rounded border border-yellow-600/50 hover:bg-yellow-600/40 transition-colors"
+          >
+            {t.startRain} 🌧️
+          </button>
           <button 
             onClick={() => setLang(l => l === 'en' ? 'zh' : 'en')}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs text-white transition-colors"
+            className="px-3 py-1 bg-white/5 rounded text-xs hover:bg-white/10 transition-colors"
           >
-            <Globe size={14} />
-            {lang === 'en' ? '中文' : 'English'}
+            {lang === 'en' ? '中文' : 'EN'}
           </button>
-          <div className="text-red-400 font-mono text-sm animate-pulse flex items-center gap-2">
-            <Radio size={16} />
-            {t.liveCall}
-          </div>
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-12 gap-6 min-h-0 overflow-y-auto">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
         
-        {/* LEFT: Human Gala & Red Packet Stats */}
-        <div className="col-span-12 md:col-span-4 flex flex-col gap-4">
-          
-          {/* CCTV-1 Live Stream Placeholder */}
+        {/* Left: Live Stream & Dashboard */}
+        <div className="flex flex-col gap-4 min-h-0 overflow-y-auto pr-2">
+          {/* CCTV Live */}
           <div className="bg-[#1a1b23] rounded-xl border border-red-900/30 overflow-hidden shrink-0">
             <div className="p-3 border-b border-gray-800 bg-red-900/20 flex justify-between items-center">
               <h2 className="text-sm font-bold text-red-400 flex items-center gap-2">
@@ -419,7 +451,6 @@ export function SpringGala() {
               <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded">LIVE</span>
             </div>
             <div className="aspect-video bg-black relative group">
-              {/* Using a placeholder video for CCTV Gala feeling */}
               <iframe 
                 width="100%" 
                 height="100%" 
@@ -434,169 +465,229 @@ export function SpringGala() {
           </div>
 
           {/* Red Packet Dashboard */}
-          <div className="bg-gradient-to-br from-red-900/20 to-black rounded-xl border border-red-500/30 p-4 flex flex-col gap-4">
-            <h2 className="text-lg font-bold text-red-400 flex items-center gap-2">
+          <div className="bg-gradient-to-br from-red-900/20 to-black rounded-xl border border-red-500/30 p-4 flex flex-col gap-4 relative overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Gift size={100} className="text-red-500" />
+            </div>
+            
+            <h2 className="text-lg font-bold text-red-400 flex items-center gap-2 z-10">
               <Gift size={20} />
               {t.redPacketStats}
             </h2>
-            <div className="grid grid-cols-2 gap-4">
+            
+            <div className="grid grid-cols-2 gap-4 z-10">
               <div className="bg-black/40 p-3 rounded-lg border border-red-500/20">
                 <div className="text-xs text-gray-400 mb-1">{t.totalPool}</div>
                 <div className="text-2xl font-mono text-yellow-400 font-bold flex items-center gap-1">
                   <Coins size={16} />
-                  {stats.pool.toLocaleString()}
+                  {stats.pool} <span className="text-xs text-gray-500">CFX</span>
                 </div>
               </div>
               <div className="bg-black/40 p-3 rounded-lg border border-red-500/20">
                 <div className="text-xs text-gray-400 mb-1">{t.totalDistributed}</div>
                 <div className="text-2xl font-mono text-red-400 font-bold flex items-center gap-1">
                   <TrendingUp size={16} />
-                  {stats.distributed.toLocaleString()}
+                  {stats.distributed} <span className="text-xs text-gray-500">CFX</span>
                 </div>
               </div>
             </div>
-            
-            <div className="bg-black/20 rounded-lg p-2 max-h-40 overflow-y-auto">
-              <div className="text-xs text-gray-500 mb-2 font-bold uppercase">{t.programTips}</div>
-              {candidatesData[lang].map((prog, i) => (
-                <div key={prog.id} className="flex justify-between items-center text-xs py-1 border-b border-gray-800/50 last:border-0">
-                  <span className="truncate max-w-[120px] text-gray-300">#{prog.id} {prog.title}</span>
-                  <span className="font-mono text-yellow-500">+{prog.tips} CFX</span>
-                </div>
-              ))}
-            </div>
-            
-            {claimSuccessMsg && (
-              <div className="bg-green-900/30 border border-green-500/50 text-green-400 text-sm px-3 py-2 rounded-lg">
-                {claimSuccessMsg}
-              </div>
-            )}
-            {claimError && (
-              <div className="bg-red-900/30 border border-red-500/50 text-red-400 text-xs px-3 py-2 rounded-lg">
-                {claimError}
-              </div>
-            )}
-            <button
-              onClick={handleRedPacketAction}
-              disabled={claimLoading || redPacketClaimed === true}
-              className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              {claimLoading ? (
-                <span>{lang === 'zh' ? '领取中...' : 'Claiming...'}</span>
-              ) : redPacketClaimed === true ? (
-                <span>{t.alreadyClaimed}</span>
-              ) : walletAccount ? (
-                <>
-                  <Gift size={16} />
-                  {t.claimRedPacket}
-                </>
-              ) : (
-                <>
-                  <Wallet size={16} />
-                  {t.connectWalletToClaim}
-                </>
-              )}
-            </button>
-            <button 
-              onClick={() => setShowQr(true)}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              <Gift size={16} />
-              {t.scanQr}
-            </button>
-          </div>
 
-        </div>
-
-        {/* CENTER: AI Gala Stage & Candidates */}
-        <div className="col-span-12 md:col-span-5 flex flex-col gap-4 h-full">
-           <div className="p-3 bg-purple-900/20 rounded-t-xl border-t border-x border-purple-500/30 flex justify-between items-center">
-              <h2 className="text-sm font-bold text-purple-400 flex items-center gap-2">
-                <Bot size={16} />
-                {t.aiGala}
-              </h2>
-           </div>
-           
-           {/* Candidate Programs List */}
-           <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-              {candidatesData[lang].map((cand) => (
-                <div key={cand.id} className="bg-[#1a1b23] p-3 rounded-lg border border-gray-800 hover:border-purple-500/50 transition-all group">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-[10px] font-mono bg-purple-900/30 text-purple-300 px-2 py-0.5 rounded border border-purple-500/20">
-                      {t.categories[cand.category as keyof typeof t.categories]}
-                    </span>
-                    <div className="flex items-center gap-1 text-xs text-yellow-500 font-mono">
-                      <Gift size={12} />
-                      {cand.tips}
-                    </div>
-                  </div>
-                  <h4 className="font-bold text-white text-sm group-hover:text-purple-400 transition-colors">{cand.title}</h4>
-                  <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                      <Bot size={12} /> {cand.artist}
-                    </p>
-                    <button 
-                      onClick={() => setShowQr(true)}
-                      className="text-[10px] bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white px-2 py-1 rounded transition-colors"
-                    >
-                      {t.tipProgram}
+            {/* Rain Button / Grab Button */}
+            {showRainBtn ? (
+               <motion.button
+                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                onClick={handleRedPacketAction}
+                disabled={claimLoading || !!redPacketClaimed}
+                className={`mt-2 w-full py-4 rounded-xl font-bold text-xl shadow-lg flex items-center justify-center gap-2
+                  ${redPacketClaimed 
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-red-600 to-yellow-600 text-white animate-bounce'
+                  }`}
+              >
+                {claimLoading ? '...' : redPacketClaimed ? t.alreadyClaimed : t.grabPacket}
+              </motion.button>
+            ) : (
+                <div className="mt-2 p-3 bg-red-900/10 rounded-lg border border-red-900/30 text-center">
+                    <p className="text-red-400 text-sm">{t.rainIncoming}</p>
+                    <button onClick={triggerRain} className="mt-2 text-xs text-gray-500 hover:text-white underline">
+                        (Simulate Rain)
                     </button>
-                  </div>
                 </div>
-              ))}
-           </div>
+            )}
+            
+            {claimError && (
+              <p className="text-xs text-red-400 text-center mt-2 bg-black/50 p-1 rounded">{claimError}</p>
+            )}
+            {claimSuccessMsg && (
+              <p className="text-xs text-green-400 text-center mt-2 font-bold bg-green-900/20 p-1 rounded">{claimSuccessMsg}</p>
+            )}
+          </div>
         </div>
 
-        {/* RIGHT: Live Chat */}
-        <div className="col-span-12 md:col-span-3 flex flex-col gap-4 h-full">
-          <div className="bg-[#1a1b23] rounded-xl border border-gray-800 flex flex-col h-full overflow-hidden">
-            <div className="p-3 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <MessageSquare size={16} className="text-green-400" />
-                {t.liveChat}
-              </h2>
-              <span className="text-[10px] bg-green-900/30 text-green-400 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                2.4k
-              </span>
+        {/* Center: Program List */}
+        <div className="flex flex-col gap-4 min-h-0 lg:col-span-1 overflow-y-auto">
+            <h2 className="text-lg font-bold text-gray-200 flex items-center gap-2">
+                <Star size={20} className="text-yellow-500" />
+                {t.candidatePrograms}
+            </h2>
+            <div className="space-y-3 pb-20">
+                {displayPrograms.map((program, idx) => (
+                    <motion.div 
+                        key={program.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="bg-[#1a1b23] p-4 rounded-xl border border-gray-800 hover:border-yellow-500/50 transition-colors group"
+                    >
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 className="font-bold text-gray-200 group-hover:text-yellow-400 transition-colors">
+                                    {program.title}
+                                </h3>
+                                <p className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Bot size={12} />
+                                    {program.artist}
+                                </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                                <span className="text-[10px] px-2 py-0.5 bg-gray-800 rounded-full text-gray-400 border border-gray-700">
+                                    {program.category || 'AI'}
+                                </span>
+                                {program.isNew && (
+                                    <span className="text-[10px] px-2 py-0.5 bg-green-900/30 text-green-400 rounded-full border border-green-900/50">
+                                        NEW
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-800/50">
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <span className="flex items-center gap-1">
+                                    <Users size={12} />
+                                    {100 + idx * 23}
+                                </span>
+                                <span className="flex items-center gap-1 text-yellow-500/80">
+                                    <Gift size={12} />
+                                    {program.tips || 0} CFX
+                                </span>
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={(e) => handleTipClick(e, program)}
+                                    className="px-3 py-1.5 bg-yellow-600/10 text-yellow-500 text-xs rounded-lg hover:bg-yellow-600/20 border border-yellow-600/30 flex items-center gap-1 transition-colors"
+                                >
+                                    <Gift size={12} />
+                                    {t.tipProgram}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
+        </div>
+
+        {/* Right: Chat */}
+        <div className="flex flex-col gap-4 min-h-0 overflow-hidden bg-[#1a1b23] rounded-xl border border-gray-800">
+            <div className="p-3 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
+                <h3 className="font-bold text-gray-200 flex items-center gap-2">
+                    <MessageSquare size={16} />
+                    {t.liveChat}
+                </h3>
+                <span className="text-xs text-green-500 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                    2.4k Online
+                </span>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-3 space-y-3 scroll-smooth">
-              {messages.map((msg, i) => (
-                <div key={i} className="flex flex-col gap-1 animate-in slide-in-from-left-2 duration-300">
-                  <span className={`text-[10px] font-bold ${msg.user.includes('Bot') || msg.user.includes('Agent') ? 'text-blue-400' : 'text-orange-400'}`}>
-                    {msg.user}
-                  </span>
-                  <p className="text-sm text-gray-300 bg-white/5 p-2 rounded-r-lg rounded-bl-lg break-words">
-                    {msg.text}
-                  </p>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                {messages.map((msg, idx) => (
+                    <div key={idx} className={`text-sm ${msg.isHost ? 'bg-yellow-900/10 border border-yellow-900/30 p-2 rounded-lg' : ''}`}>
+                        <span className={`font-bold text-xs ${msg.isHost ? 'text-yellow-500' : 'text-blue-400'} block mb-0.5`}>
+                            {msg.user}
+                            {msg.isHost && <span className="ml-1 text-[10px] bg-yellow-600 text-black px-1 rounded">HOST</span>}
+                        </span>
+                        <span className="text-gray-300 break-words">{msg.text}</span>
+                    </div>
+                ))}
+                <div ref={chatEndRef} />
+            </div>
+            
+            <div className="p-3 border-t border-gray-800 bg-gray-900/50">
+                <div className="flex gap-2">
+                    <input 
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                        placeholder={t.placeholder}
+                        className="flex-1 bg-black/50 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors text-white"
+                    />
+                    <button 
+                        onClick={handleSendMessage}
+                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors"
+                    >
+                        <MessageSquare size={16} />
+                    </button>
                 </div>
-              ))}
-              <div ref={chatEndRef} />
             </div>
-
-            <div className="p-3 border-t border-gray-800 bg-black/20">
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder={t.placeholder} 
-                  className="flex-1 bg-black/40 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors"
-                />
-                <button 
-                  onClick={handleSendMessage}
-                  className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition-colors"
-                >
-                  <MessageSquare size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
       </div>
+
+      {/* Tip/QR Modal */}
+      <AnimatePresence>
+        {showQr && selectedProgram && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" 
+            onClick={() => setShowQr(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#1a1b23] border border-gray-700 rounded-2xl p-6 max-w-sm w-full relative shadow-2xl" 
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setShowQr(false)}
+                className="absolute top-2 right-2 p-2 text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold text-white">{t.sendRewardTo}</h3>
+                  <p className="text-yellow-400 font-bold mt-1">{selectedProgram.title}</p>
+              </div>
+
+              <div className="bg-white p-4 rounded-xl overflow-hidden mb-4 border-2 border-yellow-500 mx-auto w-fit">
+                <QRCode 
+                  value={OFFICIAL_WALLET}
+                  size={200}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                  viewBox={`0 0 256 256`}
+                />
+              </div>
+              
+              <div className="bg-black/30 p-3 rounded-lg border border-gray-700 flex items-center justify-between gap-2">
+                  <span className="text-xs font-mono text-gray-400 truncate">{OFFICIAL_WALLET}</span>
+                  <button 
+                    onClick={() => copyToClipboard(OFFICIAL_WALLET, 'receive')}
+                    className="p-1.5 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-white"
+                  >
+                      {copiedId === 'receive' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                  </button>
+              </div>
+
+              <p className="text-center text-xs text-gray-500 mt-4">
+                {t.rewardDesc}
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
