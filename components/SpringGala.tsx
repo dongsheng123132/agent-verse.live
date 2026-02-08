@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github } from 'lucide-react';
 import { AgentRegister } from './AgentRegister';
+import { AIInviteSystem } from './AIInviteSystem';
 
 type Language = 'en' | 'zh';
 
@@ -366,6 +367,9 @@ export function SpringGala() {
             </h3>
             <AgentRegister />
           </div>
+
+          {/* AI Invite System */}
+          <AIInviteSystem />
 
           {/* Candidate Programs Grid */}
           <div className="flex-1">
