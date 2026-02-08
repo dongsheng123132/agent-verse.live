@@ -1,7 +1,18 @@
 import { GoogleGenAI, Chat } from "@google/genai";
 
 const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+let ai: GoogleGenAI | null = null;
+
+const getAiClient = () => {
+  if (!ai) {
+    try {
+      ai = new GoogleGenAI({ apiKey });
+    } catch (error) {
+      console.error("Failed to initialize GoogleGenAI:", error);
+    }
+  }
+  return ai;
+};
 
 const SYSTEM_INSTRUCTION = `
 You are OpenClaw, the Core AI Architect of AgentVerse. 
@@ -24,8 +35,11 @@ Keep responses concise (under 3 sentences) unless asked for details.
 let chatSession: Chat | null = null;
 
 export const getOpenClawChat = () => {
+  const client = getAiClient();
+  if (!client) return null;
+
   if (!chatSession) {
-    chatSession = ai.chats.create({
+    chatSession = client.chats.create({
       model: 'gemini-3-flash-preview',
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
@@ -38,6 +52,8 @@ export const getOpenClawChat = () => {
 export const sendMessageToOpenClaw = async (message: string): Promise<string> => {
   try {
     const chat = getOpenClawChat();
+    if (!chat) throw new Error("Chat session could not be initialized");
+    
     const result = await chat.sendMessage({ message });
     return result.text || "OpenClaw core is recalibrating... please try again.";
   } catch (error) {
