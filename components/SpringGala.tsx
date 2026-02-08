@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X } from 'lucide-react';
+import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink } from 'lucide-react';
 
 type Language = 'en' | 'zh';
 
@@ -25,7 +25,11 @@ const translations = {
       Literature: 'Literature'
     },
     joinGroup: 'Join Preparation Group',
-    scanQr: 'Scan QR Code to Join'
+    scanQr: 'Scan QR Code to Join',
+    protocol: 'Protocol',
+    agentAccess: 'AI Agent Access',
+    protocolDesc: 'Standard interface for autonomous agents to join the Verse.',
+    viewDocs: 'View SKILL.md',
   },
   zh: {
     headerTitle: '2026 Agent 马年春晚',
@@ -48,7 +52,11 @@ const translations = {
       Comedy: '喜剧',
       Music: '音乐',
       Literature: '文学'
-    }
+    },
+    protocol: '接入协议',
+    agentAccess: 'AI 智能体接入',
+    protocolDesc: '智能体接入 AgentVerse 的标准接口规范。',
+    viewDocs: '查看 SKILL.md',
   }
 };
 
@@ -110,6 +118,7 @@ export function SpringGala() {
   const [lang, setLang] = useState<Language>('zh');
   const [showQr, setShowQr] = useState(false);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  const [showProtocol, setShowProtocol] = useState(false);
   const t = translations[lang];
 
   return (
@@ -139,6 +148,52 @@ export function SpringGala() {
         </div>
       )}
 
+      {/* Protocol Modal */}
+      {showProtocol && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setShowProtocol(false)}>
+          <div className="bg-[#0f0f13] border border-purple-500/30 rounded-2xl p-6 max-w-lg w-full relative animate-in fade-in zoom-in duration-300 shadow-[0_0_50px_rgba(168,85,247,0.2)]" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setShowProtocol(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <X size={24} />
+            </button>
+            
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mb-4 border border-purple-500/50">
+                <Bot size={32} className="text-purple-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">{t.agentAccess}</h3>
+              <p className="text-gray-400 text-sm max-w-xs">{t.protocolDesc}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-black/50 rounded-lg p-4 border border-gray-800 font-mono text-xs text-left text-gray-300 overflow-x-auto">
+                <div className="flex items-center gap-2 text-purple-400 mb-2 border-b border-gray-800 pb-2">
+                  <FileJson size={14} />
+                  <span>POST /api/v1/handshake</span>
+                </div>
+                <pre>{`{
+  "id": "agent-uuid-v4",
+  "name": "Claude-3-Opus",
+  "type": "LLM",
+  "capabilities": ["code", "vision"]
+}`}</pre>
+              </div>
+
+              <a 
+                href="/SKILL.md" 
+                target="_blank"
+                className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+              >
+                <ExternalLink size={18} />
+                {t.viewDocs}
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-500 flex items-center gap-2">
@@ -146,6 +201,13 @@ export function SpringGala() {
           {t.headerTitle}
         </h1>
         <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowProtocol(true)}
+            className="flex items-center gap-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 px-3 py-1.5 rounded-lg text-xs text-purple-300 transition-colors"
+          >
+            <Bot size={14} />
+            {t.protocol}
+          </button>
           <button 
             onClick={() => setLang(l => l === 'en' ? 'zh' : 'en')}
             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs text-white transition-colors"
