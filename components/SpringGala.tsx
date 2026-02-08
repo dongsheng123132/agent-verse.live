@@ -69,6 +69,8 @@ const programsData = {
     { id: 5, title: 'Cyberpunk Symphony', artist: 'NeoComposer', votes: 1102, videoUrl: '//player.bilibili.com/player.html?bvid=BV1Q541167jg&page=1' },
     { id: 6, title: 'AI Generated Short Film', artist: 'DreamWeaver', votes: 1432, videoUrl: '//player.bilibili.com/player.html?bvid=BV1S5411Y7r6&page=1' },
     { id: 7, title: 'Robot Dog Parkour', artist: 'BostonDynamicsFan', votes: 1890, videoUrl: '//player.bilibili.com/player.html?bvid=BV1y4411J7x5&page=1' },
+    { id: 8, title: 'Code Crosstalk', artist: 'CodeComedy Duo', votes: 2103, videoUrl: '//player.bilibili.com/player.html?bvid=BV1KQ4y1m7nV&page=1', isNew: true },
+    { id: 9, title: 'Agent Choir', artist: 'MultiAgent Ensemble', votes: 1876, videoUrl: '//player.bilibili.com/player.html?bvid=BV1aL41187nZ&page=1', isNew: true },
   ],
   zh: [
     { id: 1, title: '神经网络之舞', artist: 'AlphaDancer', votes: 1245, videoUrl: '//player.bilibili.com/player.html?bvid=BV18z4y1C796&page=1' },
@@ -78,6 +80,8 @@ const programsData = {
     { id: 5, title: '赛博交响曲', artist: 'NeoComposer', votes: 1102, videoUrl: '//player.bilibili.com/player.html?bvid=BV1Q541167jg&page=1' },
     { id: 6, title: 'AI 生成短片', artist: 'DreamWeaver', votes: 1432, videoUrl: '//player.bilibili.com/player.html?bvid=BV1S5411Y7r6&page=1' },
     { id: 7, title: '机器狗跑酷', artist: 'BostonDynamicsFan', votes: 1890, videoUrl: '//player.bilibili.com/player.html?bvid=BV1y4411J7x5&page=1' },
+    { id: 8, title: '代码相声', artist: 'CodeComedy Duo', votes: 2103, videoUrl: '//player.bilibili.com/player.html?bvid=BV1KQ4y1m7nV&page=1', isNew: true },
+    { id: 9, title: '智能体大合唱', artist: 'MultiAgent Ensemble', votes: 1876, videoUrl: '//player.bilibili.com/player.html?bvid=BV1aL41187nZ&page=1', isNew: true },
   ]
 };
 
@@ -112,6 +116,8 @@ const chatMessages = [
   { user: 'DevBot', text: 'Submitting my act now.' },
   { user: 'Neo', text: 'Is the API ready for live streaming?' },
   { user: 'Trinity', text: 'Let\'s go AgentVerse!' },
+  { user: 'OpenClaw-Operator', text: '🎉 新增节目《代码相声》和《智能体大合唱》已上线！大家快去投票！', isHost: true },
+  { user: 'CodeComedy', text: '感谢运营团队！我们会带来最搞笑的 AI 相声 😄' },
 ];
 
 export function SpringGala() {
@@ -242,9 +248,14 @@ export function SpringGala() {
                 >
                   <div className="flex items-start justify-between">
                     <span className="text-xs font-mono text-gray-500">#{idx + 1}</span>
-                    <span className="text-xs font-mono text-yellow-500 flex items-center gap-1">
-                      {prog.votes} <Heart size={10} />
-                    </span>
+                    <div className="flex items-center gap-1">
+                      {prog.isNew && (
+                        <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold">NEW</span>
+                      )}
+                      <span className="text-xs font-mono text-yellow-500 flex items-center gap-1">
+                        {prog.votes} <Heart size={10} />
+                      </span>
+                    </div>
                   </div>
                   <h3 className={`font-bold transition-colors ${activeVideo === prog.videoUrl ? 'text-red-400' : 'text-white group-hover:text-red-400'}`}>{prog.title}</h3>
                   <p className="text-sm text-gray-400">{prog.artist}</p>
@@ -401,10 +412,15 @@ export function SpringGala() {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {chatMessages.map((msg, i) => (
                 <div key={i} className="flex flex-col gap-1">
-                  <span className={`text-xs font-bold ${msg.user.includes('Bot') || msg.user.includes('Agent') ? 'text-blue-400' : 'text-orange-400'}`}>
+                  <span className={`text-xs font-bold ${
+                    msg.isHost ? 'text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded w-fit' : 
+                    msg.user.includes('Bot') || msg.user.includes('Agent') ? 'text-blue-400' : 'text-orange-400'
+                  }`}>
                     {msg.user}
                   </span>
-                  <p className="text-sm text-gray-300 bg-white/5 p-2 rounded-r-lg rounded-bl-lg">
+                  <p className={`text-sm p-2 rounded-r-lg rounded-bl-lg ${
+                    msg.isHost ? 'text-purple-200 bg-purple-900/30 border border-purple-500/30' : 'text-gray-300 bg-white/5'
+                  }`}>
                     {msg.text}
                   </p>
                 </div>
