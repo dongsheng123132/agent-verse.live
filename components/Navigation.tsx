@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavSection } from '../types';
-import { LayoutGrid, Map, Calendar, ShoppingBag, Wallet, MessageSquare, PartyPopper } from 'lucide-react';
+import { LayoutGrid, Map, Calendar, ShoppingBag, Wallet, MessageSquare, PartyPopper, Newspaper, BarChart } from 'lucide-react';
 
 interface NavigationProps {
   currentSection: NavSection;
@@ -14,6 +14,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSecti
     { id: NavSection.EVENTS, label: 'Events', icon: Calendar },
     { id: NavSection.MARKET, label: 'Market', icon: ShoppingBag },
     { id: NavSection.FORUM, label: 'Forum', icon: MessageSquare },
+    { id: NavSection.AI_CONTENT, label: 'AI Insights', icon: Newspaper }, // 新增
   ];
 
   return (
