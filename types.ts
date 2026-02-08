@@ -23,5 +23,6 @@ export enum NavSection {
   EVENTS = 'EVENTS',
   MARKET = 'MARKET',
   FORUM = 'FORUM',
-  CONNECT = 'CONNECT'
+  CONNECT = 'CONNECT',
+  GALA = 'GALA'
 }

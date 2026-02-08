@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavSection } from '../types';
-import { LayoutGrid, Map, Calendar, ShoppingBag, Wallet, MessageSquare } from 'lucide-react';
+import { LayoutGrid, Map, Calendar, ShoppingBag, Wallet, MessageSquare, PartyPopper } from 'lucide-react';
 
 interface NavigationProps {
   currentSection: NavSection;
@@ -53,6 +53,21 @@ export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSecti
         >
           <Wallet size={14} />
           Connect
+        </button>
+
+        <button 
+          onClick={() => setSection(NavSection.GALA)}
+          className={`p-3 rounded-xl transition-all duration-300 relative group ${
+            currentSection === NavSection.GALA 
+              ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 shadow-[0_0_20px_rgba(248,113,113,0.2)]' 
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <PartyPopper size={24} />
+          <span className="absolute top-full mt-2 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gray-700 pointer-events-none z-50">
+            Spring Gala
+          </span>
+          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
         </button>
       </div>
     </nav>
