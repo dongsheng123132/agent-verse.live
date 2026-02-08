@@ -2,7 +2,7 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/dosen8618607105700/Downloads/agentverse-live/contracts/RedPacket.sol": {
-      "lastModificationDate": 1770567630277,
+      "lastModificationDate": 1770571220793,
       "contentHash": "c322c378a811adcee3dcddac572b0e62",
       "sourceName": "contracts/RedPacket.sol",
       "solcConfig": {
@@ -34,6 +34,76 @@
       ],
       "artifacts": [
         "RedPacket"
+      ]
+    },
+    "/Users/dosen8618607105700/Downloads/agentverse-live/contracts/RedPacketDemo.sol": {
+      "lastModificationDate": 1770574211554,
+      "contentHash": "3d2ac68cd13bd8a9d13e75691eafd081",
+      "sourceName": "contracts/RedPacketDemo.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "RedPacketDemo"
+      ]
+    },
+    "/Users/dosen8618607105700/Downloads/agentverse-live/contracts/RedPacketRandomDemo.sol": {
+      "lastModificationDate": 1770574649820,
+      "contentHash": "9ee03fd8a6e41b658175901a2e0b11d2",
+      "sourceName": "contracts/RedPacketRandomDemo.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "RedPacketRandomDemo"
       ]
     }
   }

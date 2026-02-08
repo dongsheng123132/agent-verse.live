@@ -1,0 +1,11 @@
+{
+  "contract": "RedPacketDemo",
+  "address": "0xD2a90decC11418Cc6A2411BEe7a31fA6bc4F7C91",
+  "network": "Conflux eSpace Testnet",
+  "chainId": "71",
+  "deployer": "0xe6EA7c31A85A1f42DFAc6C49155bE90722246890",
+  "fixedAmount": "0.01 CFX",
+  "maxPerClaim": "0.1 CFX",
+  "transactionHash": "0x846c09d0cb7b6a794e31a7677e68793223ed16df8fa4e204ba213002fca74a29",
+  "explorer": "https://evmtestnet.confluxscan.net/address/0xD2a90decC11418Cc6A2411BEe7a31fA6bc4F7C91"
+}

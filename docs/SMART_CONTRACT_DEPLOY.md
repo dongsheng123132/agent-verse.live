@@ -7,6 +7,13 @@ This guide will walk you through deploying the RedPacket smart contract on **Con
 
 本指南将教你如何使用 Remix IDE 在 **Conflux eSpace** 上部署红包智能合约。
 
+### 两个合约区别
+
+| 合约 | 领取规则 | 用途 |
+|------|----------|------|
+| **RedPacket.sol** | 每人仅可领一次，随机金额 (min～max) | 正式/生产 |
+| **RedPacketDemo.sol** | 可无限次领取，每次随机金额 (min～max)，适合演示 | 演示 |
+
 ---
 
 ## Prerequisites / 准备工作
@@ -85,6 +92,23 @@ After deployment, you need to fund the contract:
 
 ### Method 2: Direct Transfer / 方法2：直接转账
 Simply send CFX directly to the contract address.
+
+---
+
+## 部署 RedPacketDemo（演示用，可无限领 + 随机金额）
+
+**RedPacketDemo.sol** 为演示合约：同一地址可**无限次**领取，**每次随机金额**（minAmount～maxAmount），适合现场/录屏演示。
+
+1. 在 Remix 中打开 `contracts/RedPacketDemo.sol`，编译（Compiler 0.8.19+）。
+2. Deploy 时选择 **RedPacketDemo**，构造函数参数（与 RedPacket 一致）：
+   - **\_minAmount**：单次最小金额（Wei），例如 `10000000000000000` = 0.01 CFX
+   - **\_maxAmount**：单次最大金额（Wei），例如 `100000000000000000` = 0.1 CFX
+3. **VALUE 填 0**（部署时附带 CFX 可能触发 receive 导致 gas 估算失败或 revert）。
+4. 确保 **\_maxAmount ≥ \_minAmount**，否则构造函数会 revert（Invalid min/max）。
+5. 点 Deploy，部署成功后复制合约地址；用 **deposit** 或直接向合约地址转 CFX 充值。
+6. 任何人可多次调用 **claim()** 领随机金额；也可调 **claimBatch(times)** 一次领多份（times 1～50，每份随机后汇总转出）。
+
+前端若接演示合约：将 `RED_PACKET_CONTRACT` 改为 RedPacketDemo 的部署地址；Demo 无 `hasClaimed`，可用 `getClaimCount(user)` 做展示，领红包仍调 **claim()**。
 
 ---
 
