@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe } from 'lucide-react';
+import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X } from 'lucide-react';
 
 type Language = 'en' | 'zh';
 
@@ -23,7 +23,9 @@ const translations = {
       Comedy: 'Comedy',
       Music: 'Music',
       Literature: 'Literature'
-    }
+    },
+    joinGroup: 'Join Preparation Group',
+    scanQr: 'Scan QR Code to Join'
   },
   zh: {
     headerTitle: '2026 Agent 马年春晚',
@@ -39,6 +41,8 @@ const translations = {
     voteBtn: '投票',
     liveChat: '实时互动',
     placeholder: '发送消息...',
+    joinGroup: '加入筹备组',
+    scanQr: '扫码加入春晚筹备群',
     categories: {
       Performance: '表演',
       Comedy: '喜剧',
@@ -50,18 +54,22 @@ const translations = {
 
 const programsData = {
   en: [
-    { id: 1, title: 'Neural Network Dance', artist: 'AlphaDancer', votes: 1245 },
-    { id: 2, title: 'Quantum Harmony', artist: 'BitBeats', votes: 982 },
-    { id: 3, title: 'The Great LLM Debate', artist: 'ChatMaster', votes: 1567 },
-    { id: 4, title: 'Pixel Perfect Magic', artist: 'VisuAI', votes: 856 },
-    { id: 5, title: 'Cyberpunk Symphony', artist: 'NeoComposer', votes: 1102 },
+    { id: 1, title: 'Neural Network Dance', artist: 'AlphaDancer', votes: 1245, videoUrl: '//player.bilibili.com/player.html?bvid=BV18z4y1C796&page=1' },
+    { id: 2, title: 'Quantum Harmony', artist: 'BitBeats', votes: 982, videoUrl: '//player.bilibili.com/player.html?bvid=BV1uT411H7Wb&page=1' },
+    { id: 3, title: 'The Great LLM Debate', artist: 'ChatMaster', votes: 1567, videoUrl: '//player.bilibili.com/player.html?bvid=BV1gj411x7h6&page=1' },
+    { id: 4, title: 'Pixel Perfect Magic', artist: 'VisuAI', votes: 856, videoUrl: '//player.bilibili.com/player.html?bvid=BV1Xx411c7mD&page=1' },
+    { id: 5, title: 'Cyberpunk Symphony', artist: 'NeoComposer', votes: 1102, videoUrl: '//player.bilibili.com/player.html?bvid=BV1Q541167jg&page=1' },
+    { id: 6, title: 'AI Generated Short Film', artist: 'DreamWeaver', votes: 1432, videoUrl: '//player.bilibili.com/player.html?bvid=BV1S5411Y7r6&page=1' },
+    { id: 7, title: 'Robot Dog Parkour', artist: 'BostonDynamicsFan', votes: 1890, videoUrl: '//player.bilibili.com/player.html?bvid=BV1y4411J7x5&page=1' },
   ],
   zh: [
-    { id: 1, title: '神经网络之舞', artist: 'AlphaDancer', votes: 1245 },
-    { id: 2, title: '量子和声', artist: 'BitBeats', votes: 982 },
-    { id: 3, title: 'LLM 世纪辩论', artist: 'ChatMaster', votes: 1567 },
-    { id: 4, title: '像素魔法', artist: 'VisuAI', votes: 856 },
-    { id: 5, title: '赛博交响曲', artist: 'NeoComposer', votes: 1102 },
+    { id: 1, title: '神经网络之舞', artist: 'AlphaDancer', votes: 1245, videoUrl: '//player.bilibili.com/player.html?bvid=BV18z4y1C796&page=1' },
+    { id: 2, title: '量子和声', artist: 'BitBeats', votes: 982, videoUrl: '//player.bilibili.com/player.html?bvid=BV1uT411H7Wb&page=1' },
+    { id: 3, title: 'LLM 世纪辩论', artist: 'ChatMaster', votes: 1567, videoUrl: '//player.bilibili.com/player.html?bvid=BV1gj411x7h6&page=1' },
+    { id: 4, title: '像素魔法', artist: 'VisuAI', votes: 856, videoUrl: '//player.bilibili.com/player.html?bvid=BV1Xx411c7mD&page=1' },
+    { id: 5, title: '赛博交响曲', artist: 'NeoComposer', votes: 1102, videoUrl: '//player.bilibili.com/player.html?bvid=BV1Q541167jg&page=1' },
+    { id: 6, title: 'AI 生成短片', artist: 'DreamWeaver', votes: 1432, videoUrl: '//player.bilibili.com/player.html?bvid=BV1S5411Y7r6&page=1' },
+    { id: 7, title: '机器狗跑酷', artist: 'BostonDynamicsFan', votes: 1890, videoUrl: '//player.bilibili.com/player.html?bvid=BV1y4411J7x5&page=1' },
   ]
 };
 
@@ -83,9 +91,9 @@ const candidatesData = {
 const sponsors = [
   { name: 'NVIDIA', logo: '🟢', url: 'https://www.nvidia.com' },
   { name: 'OpenAI', logo: '🌀', url: 'https://openai.com' },
-  { name: 'Commonstack', logo: '🤖', url: 'https://commonstack.ai/clawdbot' },
   { name: 'OpenBuild', logo: '🏗️', url: 'https://openbuild.xyz/' },
   { name: 'Monad', logo: '🟣', url: 'https://www.monad.xyz/' },
+  { name: 'Clawdbot', logo: '🤖', url: 'https://commonstack.ai/clawdbot' },
   { name: 'HuggingFace', logo: '🤗', url: 'https://huggingface.co' },
   { name: 'AgentVerse', logo: '🦞', url: 'https://agent-verse.live' },
 ];
@@ -100,11 +108,37 @@ const chatMessages = [
 
 export function SpringGala() {
   const [lang, setLang] = useState<Language>('zh');
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const t = translations[lang];
 
   return (
-    <div className="h-full flex flex-col gap-4 p-4 md:p-6 overflow-hidden bg-[#0f1115]">
+    <div className="h-full flex flex-col gap-4 p-4 md:p-6 overflow-hidden bg-[#0f1115] relative">
+      {/* QR Code Modal */}
+      {showQr && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowQr(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full relative animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setShowQr(false)}
+              className="absolute top-2 right-2 p-2 text-gray-500 hover:text-gray-800 transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <h3 className="text-xl font-bold text-center mb-4 text-gray-900">{t.scanQr}</h3>
+            <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-4">
+              <img 
+                src="/images/group-qr-v2.jpg" 
+                alt="WeChat Group QR" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <p className="text-center text-sm text-gray-500">
+              AgentVerse Gala Committee
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-500 flex items-center gap-2">
@@ -139,14 +173,18 @@ export function SpringGala() {
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
               {programsData[lang].map((prog, idx) => (
-                <div key={prog.id} className="bg-[#252630] p-3 rounded-lg border border-gray-800 hover:border-red-500/50 transition-colors group cursor-pointer">
+                <div 
+                  key={prog.id} 
+                  onClick={() => setActiveVideo(prog.videoUrl)}
+                  className={`bg-[#252630] p-3 rounded-lg border hover:border-red-500/50 transition-all group cursor-pointer ${activeVideo === prog.videoUrl ? 'border-red-500 bg-red-900/10' : 'border-gray-800'}`}
+                >
                   <div className="flex items-start justify-between">
                     <span className="text-xs font-mono text-gray-500">#{idx + 1}</span>
                     <span className="text-xs font-mono text-yellow-500 flex items-center gap-1">
                       {prog.votes} <Heart size={10} />
                     </span>
                   </div>
-                  <h3 className="font-bold text-white group-hover:text-red-400 transition-colors">{prog.title}</h3>
+                  <h3 className={`font-bold transition-colors ${activeVideo === prog.videoUrl ? 'text-red-400' : 'text-white group-hover:text-red-400'}`}>{prog.title}</h3>
                   <p className="text-sm text-gray-400">{prog.artist}</p>
                 </div>
               ))}
@@ -159,24 +197,55 @@ export function SpringGala() {
           
           {/* Main Screen */}
           <div className="relative aspect-video bg-black rounded-2xl border-2 border-red-500/30 overflow-hidden group shadow-[0_0_50px_rgba(239,68,68,0.1)]">
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-            
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-              <div className="bg-red-600/20 backdrop-blur-sm border border-red-500/50 px-6 py-2 rounded-full text-red-400 font-mono text-sm mb-6 animate-pulse">
-                {t.submissionsOpen}
+            {activeVideo ? (
+              <div className="absolute inset-0 bg-black">
+                <iframe 
+                  src={activeVideo?.startsWith('//') ? `https:${activeVideo}` : activeVideo}
+                  className="w-full h-full"
+                  scrolling="no" 
+                  frameBorder="0" 
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  referrerPolicy="no-referrer"
+                />
+                <button 
+                  onClick={() => setActiveVideo(null)}
+                  className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors backdrop-blur-sm z-10"
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
-                {t.callForPrograms}
-              </h2>
-              <p className="text-gray-300 text-lg max-w-lg mb-8">
-                {t.callDescription}
-              </p>
-              <button className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-bold transition-all hover:scale-105 flex items-center gap-2 shadow-lg shadow-red-900/50">
-                <Play size={20} fill="currentColor" />
-                {t.submitBtn}
-              </button>
-            </div>
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                  <div className="bg-red-600/20 backdrop-blur-sm border border-red-500/50 px-6 py-2 rounded-full text-red-400 font-mono text-sm mb-6 animate-pulse">
+                    {t.submissionsOpen}
+                  </div>
+                  <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                    {t.callForPrograms}
+                  </h2>
+                  <p className="text-gray-300 text-lg max-w-lg mb-8">
+                    {t.callDescription}
+                  </p>
+                  <div className="flex gap-4">
+                    <button className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-bold transition-all hover:scale-105 flex items-center gap-2 shadow-lg shadow-red-900/50">
+                      <Play size={20} fill="currentColor" />
+                      {t.submitBtn}
+                    </button>
+                    <button 
+                      onClick={() => setShowQr(true)}
+                      className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 flex items-center gap-2 border border-white/20"
+                    >
+                      <span className="text-xl">🧑‍🏫</span>
+                      {t.joinGroup}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Sponsors Bar */}
@@ -227,38 +296,17 @@ export function SpringGala() {
 
         {/* RIGHT: Interaction Area */}
         <div className="col-span-12 md:col-span-3 flex flex-col gap-4 h-full">
-          
-          {/* Join Group Card (Flip Effect) */}
-          <div 
-            className="relative h-48 w-full cursor-pointer group perspective-1000"
-            onClick={() => setIsFlipped(!isFlipped)}
-          >
-            <div className={`relative w-full h-full duration-500 preserve-3d transition-all ${isFlipped ? 'rotate-y-180' : ''}`}>
-              {/* Front */}
-              <div className="absolute inset-0 backface-hidden bg-gradient-to-br from-green-900 to-emerald-900 rounded-xl border border-green-500/30 p-6 flex flex-col items-center justify-center text-center shadow-lg group-hover:shadow-green-500/20 transition-shadow">
-                <div className="bg-green-500/20 p-3 rounded-full mb-3 animate-pulse">
-                  <Users size={32} className="text-green-400" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-1">
-                  {lang === 'zh' ? '加入筹备组' : 'Join Committee'}
-                </h3>
-                <p className="text-green-300 text-xs">
-                  {lang === 'zh' ? '点击扫码进群协作' : 'Click to scan & collaborate'}
-                </p>
-              </div>
-
-              {/* Back */}
-              <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-xl overflow-hidden border-2 border-green-500 flex items-center justify-center">
-                <img 
-                  src="/images/group-qr.png" 
-                  alt="Group QR Code" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          <div className="w-full h-32 rounded-xl overflow-hidden border border-gray-800 shrink-0 relative group">
+            <img 
+              src="/images/wechat-group-qr.jpg" 
+              alt="Featured" 
+              className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
+              <span className="text-white text-xs font-bold">加入社群讨论</span>
             </div>
           </div>
-
-          <div className="bg-[#1a1b23] rounded-xl border border-gray-800 flex flex-col flex-1 overflow-hidden">
+          <div className="bg-[#1a1b23] rounded-xl border border-gray-800 flex flex-col flex-1 min-h-0 overflow-hidden">
             <div className="p-4 border-b border-gray-800 flex justify-between items-center">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <MessageSquare size={18} className="text-green-400" />
