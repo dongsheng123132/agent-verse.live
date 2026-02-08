@@ -189,6 +189,9 @@ export function SpringGala() {
   // New features state
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [showRainBtn, setShowRainBtn] = useState(false); // Admin toggle simulation
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositLoading, setDepositLoading] = useState(false);
 
   const t = translations[lang];
 
@@ -371,6 +374,36 @@ export function SpringGala() {
     }
   };
 
+  const handleDeposit = async () => {
+    if (!depositAmount || isNaN(Number(depositAmount))) return;
+    const eth = (window as any).ethereum;
+    if (!eth) return;
+    
+    try {
+      setDepositLoading(true);
+      const { BrowserProvider, Contract, parseEther } = await import('ethers');
+      const provider = new BrowserProvider(eth);
+      const signer = await provider.getSigner();
+      
+      // Use sendTransaction to trigger receive() function, allowing anyone to deposit (not just owner)
+      const tx = await signer.sendTransaction({
+        to: RED_PACKET_CONTRACT,
+        value: parseEther(depositAmount)
+      });
+      await tx.wait();
+      
+      setDepositAmount('');
+      setShowDeposit(false);
+      loadContractData(provider);
+      // alert('Deposit Successful!');
+    } catch (e) {
+      console.error(e);
+      alert('Error: ' + (e as any).message);
+    } finally {
+      setDepositLoading(false);
+    }
+  };
+
   // Poll for data
   useEffect(() => {
     const fetchPrograms = async () => {
@@ -492,6 +525,27 @@ export function SpringGala() {
                 </div>
               </div>
             </div>
+
+            {/* Top Tipped Programs */}
+            <div className="mt-4 z-10">
+                <h3 className="text-xs font-bold text-yellow-500 mb-2 uppercase tracking-wider">{t.programTips}</h3>
+                <div className="space-y-2">
+                    {displayPrograms.sort((a,b) => (b.tips || 0) - (a.tips || 0)).slice(0, 3).map((p, i) => (
+                        <div key={p.id} className="flex justify-between items-center text-xs bg-black/20 p-2 rounded border border-yellow-900/20">
+                            <span className="text-gray-300 truncate max-w-[120px]">{i+1}. {p.title}</span>
+                            <span className="font-mono text-yellow-400">{p.tips || 0} CFX</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <button 
+                onClick={() => setShowDeposit(true)}
+                className="mt-4 w-full py-2 bg-yellow-600/20 border border-yellow-600/50 rounded-lg text-yellow-400 font-bold text-sm hover:bg-yellow-600/30 transition-colors z-10 flex items-center justify-center gap-2"
+            >
+                <Wallet size={16} />
+                {t.sendRedPacket}
+            </button>
 
             {/* Rain Button / Grab Button */}
             {showRainBtn ? (
@@ -684,6 +738,77 @@ export function SpringGala() {
               <p className="text-center text-xs text-gray-500 mt-4">
                 {t.rewardDesc}
               </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Deposit Modal */}
+      <AnimatePresence>
+        {showDeposit && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" 
+            onClick={() => setShowDeposit(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#1a1b23] border border-red-500/30 rounded-2xl p-6 max-w-sm w-full relative shadow-2xl" 
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setShowDeposit(false)}
+                className="absolute top-2 right-2 p-2 text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold text-red-400 flex items-center justify-center gap-2">
+                    <Gift size={24} />
+                    {t.sendRedPacket}
+                  </h3>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-red-900/10 p-3 rounded-lg border border-red-900/30">
+                  <p className="text-xs text-gray-300 mb-2">{t.sendToContract}</p>
+                  <div className="flex gap-2">
+                    <input 
+                      type="number" 
+                      value={depositAmount}
+                      onChange={e => setDepositAmount(e.target.value)}
+                      placeholder="Amount (CFX)"
+                      className="flex-1 bg-black/50 border border-gray-700 rounded px-3 py-2 text-white focus:border-red-500 outline-none"
+                    />
+                    <button 
+                      onClick={handleDeposit}
+                      disabled={depositLoading}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold disabled:opacity-50"
+                    >
+                      {depositLoading ? '...' : 'Send'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-800">
+                  <p className="text-xs text-gray-400 mb-1">{t.sendToUs}</p>
+                  <div className="flex items-center justify-between gap-2 bg-black/30 p-2 rounded border border-gray-700">
+                    <span className="text-xs font-mono text-gray-500 truncate">{OFFICIAL_WALLET}</span>
+                    <button 
+                      onClick={() => copyToClipboard(OFFICIAL_WALLET, 'receive')}
+                      className="p-1 hover:bg-gray-700 rounded text-gray-400"
+                    >
+                      {copiedId === 'receive' ? <Check size={12} /> : <Copy size={12} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-500 mt-4 text-center">
+                    <p>Contract: {RED_PACKET_CONTRACT.slice(0,6)}...{RED_PACKET_CONTRACT.slice(-4)}</p>
+                    <p className="mt-1">Logic: Users claim random amounts. First come, first served.</p>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}
