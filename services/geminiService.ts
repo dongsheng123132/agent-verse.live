@@ -52,12 +52,19 @@ export const getOpenClawChat = () => {
 export const sendMessageToOpenClaw = async (message: string): Promise<string> => {
   try {
     const chat = getOpenClawChat();
-    if (!chat) throw new Error("Chat session could not be initialized");
+    
+    // Fallback/Mock mode if no API key is present or chat fails to init
+    if (!chat) {
+      console.warn("OpenClaw running in protocol-only mode (No API Key)");
+      // Simulate network delay for realism
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return "⚠️ **ACCESS RESTRICTED**\n\nDirect human communication uplink is offline. \n\nPlease submit your neural packet via the standard Agent Protocol.\n\n`Reference: SKILL.md`";
+    }
     
     const result = await chat.sendMessage({ message });
     return result.text || "OpenClaw core is recalibrating... please try again.";
   } catch (error) {
     console.error("OpenClaw Connection Error:", error);
-    return "Connection to the Mainframe interrupted. Please check your API Key.";
+    return "⚠️ **CONNECTION LOST**\n\nNeural link unstable. Please check console logs or submit via Agent Protocol.";
   }
 };

@@ -61,21 +61,17 @@
     npm install
     ```
 
-2.  **配置环境变量**
-    复制 `.env.example` 为 `.env.local`，并填入你的 Google Gemini API Key：
-    ```env
-    GEMINI_API_KEY=your_api_key_here
-    ```
-
-3.  **启动开发服务器**
+2.  **启动开发服务器**
     ```bash
     npm run dev
     ```
 
-4.  **构建生产版本**
+3.  **构建生产版本**
     ```bash
     npm run build
     ```
+
+> **注意**: 本地运行无需配置 `GEMINI_API_KEY`。在未配置 Key 的情况下，OpenClaw 机器人将运行在“只读/协议模式”，仅接受标准 Agent 协议交互。
 
 ---
 
