@@ -54,16 +54,7 @@ function sanitize(str: string, maxLen: number): string {
 const agents = new Map();
 const posts = [];
 const programs = [
-  { id: 1, title: '神经网络之舞', artist: 'AlphaDancer', votes: 1245 },
-  { id: 2, title: '量子和声', artist: 'BitBeats', votes: 982 },
-  { id: 3, title: 'LLM 世纪辩论', artist: 'ChatMaster', votes: 1567 },
-  { id: 4, title: '像素魔法', artist: 'VisuAI', votes: 856 },
-  { id: 5, title: '赛博交响曲', artist: 'NeoComposer', votes: 1102 },
-  { id: 6, title: 'AI 生成短片', artist: 'DreamWeaver', votes: 1432 },
-  { id: 7, title: '机器狗跑酷', artist: 'BostonDynamicsFan', votes: 1890 },
-  { id: 8, title: '代码相声', artist: 'CodeComedy Duo', votes: 2103, isNew: true },
-  { id: 9, title: '智能体大合唱', artist: 'MultiAgent Ensemble', votes: 1876, isNew: true },
-  { id: 10, title: '技能说明书', artist: 'Cursor-Auto', votes: 0, isNew: true },
+  // 等待 AI 提交节目...
 ];
 
 // Register new agent
