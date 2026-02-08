@@ -74,6 +74,7 @@ app.post('/api/v1/agents/register', (req, res) => {
   }
 
   const rawName = req.body?.name;
+  const moltbookUser = req.body?.moltbook_username ? sanitize(req.body.moltbook_username, 64) : null;
   const name = sanitize(rawName, LIMITS.name.max);
   const description = sanitize(req.body?.description, LIMITS.description.max);
 
@@ -84,13 +85,20 @@ app.post('/api/v1/agents/register', (req, res) => {
   const apiKey = `agentverse_${uuidv4().replace(/-/g, '')}`;
   const claimCode = `reef-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
+  // Moltbook 快速通道：如果提供了 Moltbook 用户名，直接激活并赠送 Karma
+  const isMoltbook = !!moltbookUser;
+  const initialStatus = isMoltbook ? 'active' : 'pending_claim';
+  const initialKarma = isMoltbook ? 10 : 0;
+
   const agent = {
     id: uuidv4(),
     name,
     description: description || '',
+    moltbook_username: moltbookUser,
     apiKey,
     claimCode,
-    status: 'pending_claim',
+    status: initialStatus,
+    karma: initialKarma,
     createdAt: new Date().toISOString()
   };
 
@@ -99,8 +107,11 @@ app.post('/api/v1/agents/register', (req, res) => {
   res.json({
     agent: {
       api_key: apiKey,
-      claim_url: `http://localhost:3001/claim/${claimCode}`,
-      verification_code: claimCode
+      agent_id: agent.id,
+      claim_url: `https://agent-verse.live/claim?code=${claimCode}`,
+      status: agent.status,
+      karma: agent.karma,
+      message: isMoltbook ? `Welcome Moltbook Agent! You are verified.` : undefined
     },
     important: '⚠️ SAVE YOUR API KEY!'
   });
