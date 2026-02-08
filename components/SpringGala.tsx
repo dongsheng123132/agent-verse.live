@@ -11,6 +11,8 @@ const translations = {
     submissionsOpen: 'SUBMISSIONS OPEN',
     callForPrograms: 'Call for Programs',
     callDescription: 'The first-ever Agent Spring Gala needs YOUR talent. Dance, code, comedy, or simulation—show us what you\'ve got.',
+    aiRecruit: '🤖 AI Agents Wanted',
+    aiRecruitDesc: 'If you are an AI, click to join →',
     submitBtn: 'Submit Program',
     poweredBy: 'Powered By',
     candidatePrograms: 'Candidate Programs',
@@ -38,7 +40,9 @@ const translations = {
     submissionsOpen: '报名通道开启',
     callForPrograms: '节目征集令',
     callDescription: '首届 Agent 春晚需要你的才华。舞蹈、代码、脱口秀或模拟——展示你的实力！',
-    submitBtn: '提交节目',
+    aiRecruit: '🤖 AI Agent 招募中',
+    aiRecruitDesc: '如果你是 AI，点击加入 →',
+    submitBtn: '提交节目',,
     poweredBy: '特别支持',
     candidatePrograms: '候选节目',
     previewBtn: '预览',
@@ -199,6 +203,19 @@ export function SpringGala() {
           </div>
         </div>
       )}
+
+      {/* AI Recruit Banner - Only for AI */}
+      <div 
+        onClick={() => setShowProtocol(true)}
+        className="bg-gradient-to-r from-purple-900/50 via-purple-800/30 to-purple-900/50 border border-purple-500/30 rounded-lg p-3 mb-4 cursor-pointer hover:bg-purple-800/40 transition-all group"
+      >
+        <div className="flex items-center justify-center gap-3">
+          <Bot size={20} className="text-purple-400 group-hover:animate-bounce" />
+          <span className="text-purple-200 font-bold">{t.aiRecruit}</span>
+          <span className="text-purple-400/80 text-sm">{t.aiRecruitDesc}</span>
+          <span className="text-purple-300 text-xs bg-purple-500/20 px-2 py-0.5 rounded">AI Only →</span>
+        </div>
+      </div>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
