@@ -1,11 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp } from 'lucide-react';
+import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp, Wallet } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Language = 'en' | 'zh';
 
 const OFFICIAL_WALLET = "0x408E2fC4FCAF2D38a6C9dcF07C6457bdFb6e0250";
+/** Conflux eSpace 测试网红包合约（直接转 CFX 即可进池子，合约有 receive） */
+const RED_PACKET_CONTRACT = "0x7f013f5cB9e851Bec8Ac825f89eBb0135e87a784";
+/** 收款地址：打款后由我们充值到合约 */
+const RED_PACKET_RECEIVE_ADDRESS = "0xe6EA7c31A85A1f42DFAc6C49155bE90722246890";
+const CONFLUX_ESPACE_TESTNET_CHAIN_ID = 71;
+
+const RED_PACKET_ABI = [
+  "function claim() external",
+  "function getBalance() external view returns (uint256)",
+  "function hasClaimed(address) external view returns (bool)",
+  "function minAmount() external view returns (uint256)",
+] as const;
 
 const translations = {
   en: {
@@ -42,6 +54,17 @@ const translations = {
     totalDistributed: 'Distributed',
     programTips: 'Program Tips',
     tipProgram: 'Tip Program',
+    claimRedPacket: 'Claim Red Packet',
+    connectWalletToClaim: 'Connect Wallet to Claim',
+    alreadyClaimed: 'Already claimed',
+    noPacketLeft: 'No packets left',
+    claimSuccess: 'You got',
+    installFluent: 'Install Fluent (Conflux eSpace)',
+    sendRedPacket: 'Send Red Packet',
+    sendToContract: 'Send CFX to contract (direct)',
+    sendToUs: 'Or send to our address (we deposit to contract)',
+    copyAddress: 'Copy',
+    copied: 'Copied',
   },
   zh: {
     headerTitle: '2026 Agent 马年春晚',
@@ -77,6 +100,17 @@ const translations = {
     totalDistributed: '已发出红包',
     programTips: '节目打赏榜',
     tipProgram: '打赏此节目',
+    claimRedPacket: '领红包',
+    connectWalletToClaim: '连接钱包领红包',
+    alreadyClaimed: '您已领过',
+    noPacketLeft: '红包已领完',
+    claimSuccess: '恭喜领到',
+    installFluent: '请安装 Fluent 并连接 Conflux eSpace 测试网',
+    sendRedPacket: '发红包',
+    sendToContract: '直接给合约打 CFX（推荐，合约可直接收款）',
+    sendToUs: '或打款到我们地址，由我们充值到合约',
+    copyAddress: '复制',
+    copied: '已复制',
   }
 };
 
@@ -155,6 +189,22 @@ export function SpringGala() {
     userClaimed: 0
   });
 
+  // Red Packet (Conflux) state
+  const [walletAccount, setWalletAccount] = useState<string | null>(null);
+  const [redPacketClaimed, setRedPacketClaimed] = useState<boolean | null>(null);
+  const [redPacketBalance, setRedPacketBalance] = useState<string>('0');
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+  const [claimSuccessMsg, setClaimSuccessMsg] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<'contract' | 'receive' | null>(null);
+
+  const copyToClipboard = (text: string, id: 'contract' | 'receive') => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -176,6 +226,97 @@ export function SpringGala() {
   const handleProgramClick = (program: any) => {
     setActiveVideo(program.videoUrl);
   };
+
+  // Conflux eSpace 领红包
+  const loadRedPacketState = async (provider: any, address: string): Promise<{ balance: string; claimed: boolean } | null> => {
+    try {
+      const { Contract } = await import('ethers');
+      const c = new Contract(RED_PACKET_CONTRACT, RED_PACKET_ABI, provider);
+      const [balance, claimed] = await Promise.all([
+        c.getBalance(),
+        c.hasClaimed(address),
+      ]);
+      const balStr = balance.toString();
+      setRedPacketBalance(balStr);
+      setRedPacketClaimed(claimed);
+      return { balance: balStr, claimed };
+    } catch (e) {
+      console.warn('Red packet state:', e);
+      setRedPacketClaimed(null);
+      return null;
+    }
+  };
+
+  const handleRedPacketAction = async () => {
+    setClaimError(null);
+    setClaimSuccessMsg(null);
+    const eth = (window as any).ethereum;
+    if (!eth) {
+      setClaimError(t.installFluent);
+      return;
+    }
+    try {
+      const { BrowserProvider, Contract } = await import('ethers');
+      const provider = new BrowserProvider(eth);
+      const accounts = await provider.send('eth_requestAccounts', []);
+      const account = accounts[0];
+      if (!account) return;
+      setWalletAccount(account);
+
+      const chainIdHex = await provider.send('eth_chainId', []);
+      const chainId = parseInt(chainIdHex, 16);
+      if (chainId !== CONFLUX_ESPACE_TESTNET_CHAIN_ID) {
+        try {
+          await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x47' }] });
+        } catch {
+          setClaimError(lang === 'zh' ? '请切换到 Conflux eSpace 测试网 (Chain ID 71)' : 'Switch to Conflux eSpace Testnet (71)');
+          return;
+        }
+      }
+
+      const signer = await provider.getSigner();
+      const state = await loadRedPacketState(provider, account);
+      if (state?.claimed) {
+        setClaimError(t.alreadyClaimed);
+        return;
+      }
+      const minAmount = BigInt('10000000000000000');
+      const balance = BigInt(state?.balance ?? '0');
+      if (balance < minAmount) {
+        setClaimError(t.noPacketLeft);
+        return;
+      }
+
+      setClaimLoading(true);
+      const contract = new Contract(RED_PACKET_CONTRACT, RED_PACKET_ABI, signer);
+      const tx = await contract.claim();
+      const receipt = await tx.wait();
+      setRedPacketClaimed(true);
+      const amt = receipt?.logs?.[0]?.data ? BigInt(receipt.logs[0].data).toString() : '';
+      const cfx = amt ? (Number(amt) / 1e18).toFixed(4) : '';
+      setClaimSuccessMsg(`${t.claimSuccess} ${cfx} CFX`);
+      await loadRedPacketState(provider, account);
+    } catch (e: any) {
+      const msg = e?.reason || e?.message || String(e);
+      setClaimError(msg);
+    } finally {
+      setClaimLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!walletAccount) return;
+    const eth = (window as any).ethereum;
+    if (!eth) return;
+    (async () => {
+      try {
+        const { BrowserProvider } = await import('ethers');
+        const provider = new BrowserProvider(eth);
+        const accounts = await provider.send('eth_requestAccounts', []);
+        if (accounts[0]) await loadRedPacketState(provider, accounts[0]);
+      } catch (_) {}
+    })();
+  }, [walletAccount]);
 
   // Fetch programs from API
   useEffect(() => {
@@ -282,7 +423,7 @@ export function SpringGala() {
               <iframe 
                 width="100%" 
                 height="100%" 
-                src="//player.bilibili.com/player.html?bvid=BV1y4411J7x5&page=1&high_quality=1&danmaku=1" 
+                src="https://www.youtube.com/embed/5qap5aO4i9A?autoplay=1&mute=1" 
                 title="CCTV Gala Live" 
                 frameBorder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -325,6 +466,37 @@ export function SpringGala() {
               ))}
             </div>
             
+            {claimSuccessMsg && (
+              <div className="bg-green-900/30 border border-green-500/50 text-green-400 text-sm px-3 py-2 rounded-lg">
+                {claimSuccessMsg}
+              </div>
+            )}
+            {claimError && (
+              <div className="bg-red-900/30 border border-red-500/50 text-red-400 text-xs px-3 py-2 rounded-lg">
+                {claimError}
+              </div>
+            )}
+            <button
+              onClick={handleRedPacketAction}
+              disabled={claimLoading || redPacketClaimed === true}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              {claimLoading ? (
+                <span>{lang === 'zh' ? '领取中...' : 'Claiming...'}</span>
+              ) : redPacketClaimed === true ? (
+                <span>{t.alreadyClaimed}</span>
+              ) : walletAccount ? (
+                <>
+                  <Gift size={16} />
+                  {t.claimRedPacket}
+                </>
+              ) : (
+                <>
+                  <Wallet size={16} />
+                  {t.connectWalletToClaim}
+                </>
+              )}
+            </button>
             <button 
               onClick={() => setShowQr(true)}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"

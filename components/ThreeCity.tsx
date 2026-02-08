@@ -319,11 +319,11 @@ export const ThreeCity: React.FC<ThreeCityProps> = ({ zones, onSelectZone }) => 
   }, [zones, onSelectZone]);
 
   return (
-    <div className="relative w-full h-[600px] bg-black overflow-hidden rounded-xl">
+    <div className="absolute inset-0 w-full h-full bg-black overflow-hidden">
       <div ref={mountRef} className="w-full h-full" />
       
-      {/* HUD Overlay */}
-      <div className="absolute top-4 left-4 pointer-events-none">
+      {/* HUD Overlay - Updated for Fullscreen */}
+      <div className="absolute top-20 left-4 pointer-events-none z-10">
           <h3 className="text-white font-mono text-sm tracking-widest opacity-70">
               GALAXY_VIEW // <span className="text-blue-400">SECTOR_01</span>
           </h3>
