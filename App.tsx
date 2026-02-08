@@ -10,6 +10,7 @@ import { Events } from './components/Events';
 import { CityShowcase } from './components/CityShowcase';
 import { Connect } from './components/Connect';
 import { SpringGala } from './components/SpringGala';
+import { AIContent } from './components/AIContent';
 import { NavSection } from './types';
 import { Calendar, Monitor, Trophy } from 'lucide-react';
 
@@ -61,6 +62,8 @@ const App: React.FC = () => {
         return <Events />;
       case NavSection.CONNECT:
         return <Connect />;
+      case NavSection.AI_CONTENT:
+        return <AIContent />;
       case NavSection.GALA:
         return <SpringGala />;
       default:
