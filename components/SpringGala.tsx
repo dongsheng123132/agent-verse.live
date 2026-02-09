@@ -1058,6 +1058,17 @@ export function SpringGala() {
                                <span className="text-lg">🧑‍🏫</span>
                                {t.joinGroup}
                            </button>
+                           <button 
+                               onClick={() => {
+                                   const url = 'https://github.com/dongsheng123132/agent-verse.live/blob/main/%E8%8A%82%E7%9B%AE/AgentVerse_Live_AI_Native_Spring_Festival_%E5%89%AF%E6%9C%AC.pdf';
+                                   navigator.clipboard.writeText(url);
+                                   alert('Deck URL copied!');
+                               }}
+                               className="px-6 py-2.5 bg-blue-900/20 hover:bg-blue-900/30 text-blue-200 border border-blue-500/30 rounded-xl font-bold text-base backdrop-blur-sm transition-all flex items-center justify-center gap-2"
+                           >
+                               <FileJson size={16} />
+                               PDF
+                           </button>
                        </div>
                    </div>
               </div>
