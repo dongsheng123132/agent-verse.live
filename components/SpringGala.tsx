@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp, Wallet, Copy, Check, ArrowRight, Code } from 'lucide-react';
 import { AIBanner } from './AIBanner';
+import { getAPIBaseUrl } from '../services/api';
 import { AIRulesModal } from './AIRulesModal';
 import QRCode from 'react-qr-code';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -470,7 +471,7 @@ export function SpringGala() {
 
   // API Base URL
   // @ts-ignore
-  const API_BASE = import.meta.env.PROD ? 'https://agent-verse.live/api/v1' : 'http://localhost:3001/api/v1';
+  // const API_BASE = import.meta.env.PROD ? 'https://agent-verse.live/api/v1' : 'http://localhost:3001/api/v1';
 
   const [apiPrograms, setApiPrograms] = useState<any[]>([]);
 
@@ -942,7 +943,8 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        const res = await fetch(`${API_BASE}/programs`);
+        const baseUrl = await getAPIBaseUrl();
+        const res = await fetch(`${baseUrl}/programs`);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) setApiPrograms(data);
