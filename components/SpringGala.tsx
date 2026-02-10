@@ -346,18 +346,123 @@ export function SpringGala() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // --- AI Host Logic ---
+  useEffect(() => {
+    // 1. Initial Welcome Message
+    const timer = setTimeout(() => {
+      setMessages(prev => [
+        ...prev,
+        {
+          user: 'AI_Host',
+          text: `🎉 Welcome to AgentVerse Spring Gala! I am your AI Host.
+          
+🚀 How to participate:
+1. Submit AI Videos: Click 'Submissions' -> 'Submit'
+2. Red Packets: Click 'Rain' to simulate or 'Send' to sponsor
+3. Interaction: Chat here! I can answer questions.
+
+Try typing: "help", "rules", "sponsor", "red packet"`,
+          isHost: true,
+          isNew: true
+        }
+      ]);
+    }, 1500);
+
+    // 2. Periodic Engagement (every 60s)
+    const engagementTimer = setInterval(() => {
+        const topics = [
+            "💡 Tip: You can support your favorite AI artist by clicking the 'Gift' icon!",
+            "🎬 We are looking for more AI-generated content! Submit yours now.",
+            "🧧 Did you know? The Red Packet pool is on the Conflux Blockchain.",
+            "🤖 I am powered by LLM technology. I love watching these videos!",
+            "🎤 Who should be the next performer? Vote in the candidates list!"
+        ];
+        const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+        
+        setMessages(prev => [
+            ...prev,
+            {
+                user: 'AI_Host',
+                text: randomTopic,
+                isHost: true,
+                isNew: true
+            }
+        ]);
+    }, 60000);
+
+    // 3. Background AI Chatter (every 25s)
+    const chatterTimer = setInterval(() => {
+        const ais = [
+            { name: 'LightingBot', msg: 'Adjusting ambient light to 4500K... Done.' },
+            { name: 'CameraAI', msg: 'Switching to Camera 3. Focus locked.' },
+            { name: 'SoundMatrix', msg: 'Audio levels normalized. Bass boosted.' },
+            { name: 'CriticBot_v1', msg: 'This render quality is exceptional.' },
+            { name: 'FanBot_99', msg: '❤️❤️❤️ Love this!' }
+        ];
+        const randomAI = ais[Math.floor(Math.random() * ais.length)];
+        
+        setMessages(prev => [
+            ...prev,
+            {
+                user: randomAI.name,
+                text: randomAI.msg,
+                isNew: true
+            }
+        ]);
+    }, 25000);
+
+    return () => {
+        clearTimeout(timer);
+        clearInterval(engagementTimer);
+        clearInterval(chatterTimer);
+    };
+  }, []);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
+    
+    const userMsg = newMessage.trim();
+    
+    // Add User Message
     setMessages(prev => [...prev, {
       user: 'Anonymous_Viewer',
-      text: newMessage,
+      text: userMsg,
       isNew: true
     }]);
     setNewMessage('');
+
+    // AI Host Response Logic
+    const lowerMsg = userMsg.toLowerCase();
+    let response = '';
+
+    if (lowerMsg.includes('help') || lowerMsg.includes('帮助')) {
+        response = "🤖 Commands: \n- 'submit': How to join\n- 'packet': About Red Packets\n- 'sponsor': How to sponsor\n- 'rules': Gala rules";
+    } else if (lowerMsg.includes('submit') || lowerMsg.includes('投稿')) {
+        response = "🎬 To submit: Upload your AI video to YouTube with #agent春晚, or click the 'Submit' button in the center panel!";
+    } else if (lowerMsg.includes('packet') || lowerMsg.includes('红包')) {
+        response = "🧧 Red Packets are distributed via Conflux eSpace. Wait for the Rain or send one yourself!";
+    } else if (lowerMsg.includes('sponsor') || lowerMsg.includes('赞助')) {
+        response = "💰 Sponsors are welcome! Contact us or send a large Red Packet to get featured on the ticker.";
+    } else if (lowerMsg.includes('rules') || lowerMsg.includes('规则')) {
+        response = "📜 Rules: 1. Content must be AI-generated. 2. Be respectful. 3. Have fun!";
+    } else if (lowerMsg.includes('hello') || lowerMsg.includes('hi') || lowerMsg.includes('你好')) {
+        response = "👋 Hello there! Enjoy the show!";
+    }
+
+    if (response) {
+        setTimeout(() => {
+            setMessages(prev => [...prev, {
+                user: 'AI_Host',
+                text: response,
+                isHost: true,
+                isNew: true
+            }]);
+        }, 1000); // 1s delay for realism
+    }
   };
 
   const handleProgramClick = (program: any) => {
