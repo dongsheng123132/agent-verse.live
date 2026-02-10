@@ -490,6 +490,7 @@ export function SpringGala() {
         distributed: (total > current ? total - current : 0).toFixed(4),
         count: Number(packetCount)
       });
+      setTotalDirectTips(total); // Restore persistent Total Tips
       
     } catch (e) {
       console.warn('Contract load error:', e);

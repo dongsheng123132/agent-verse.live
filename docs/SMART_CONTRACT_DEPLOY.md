@@ -7,12 +7,13 @@ This guide will walk you through deploying the RedPacket smart contract on **Con
 
 本指南将教你如何使用 Remix IDE 在 **Conflux eSpace** 上部署红包智能合约。
 
-### 两个合约区别
+### 合约区别
 
 | 合约 | 领取规则 | 用途 |
 |------|----------|------|
 | **RedPacket.sol** | 每人仅可领一次，随机金额 (min～max) | 正式/生产 |
 | **RedPacketDemo.sol** | 可无限次领取，每次随机金额 (min～max)，适合演示 | 演示 |
+| **RedPacketWithPassphrase.sol** | 需输入正确口令才能领取，可多次领取、随机金额 | 带口令红包 / 私密分享 |
 
 ---
 
@@ -109,6 +110,26 @@ Simply send CFX directly to the contract address.
 6. 任何人可多次调用 **claim()** 领随机金额；也可调 **claimBatch(times)** 一次领多份（times 1～50，每份随机后汇总转出）。
 
 前端若接演示合约：将 `RED_PACKET_CONTRACT` 改为 RedPacketDemo 的部署地址；Demo 无 `hasClaimed`，可用 `getClaimCount(user)` 做展示，领红包仍调 **claim()**。
+
+---
+
+## 部署 RedPacketWithPassphrase（带口令红包）
+
+**RedPacketWithPassphrase.sol**：用户必须输入**正确口令**才能领取，可多次领取、每次随机金额，适合私密分享或活动口令。
+
+1. 在 Remix 中打开 `contracts/RedPacketWithPassphrase.sol`，编译（Compiler 0.8.19+）。
+2. 构造函数参数：
+   - **\_minAmount**：单次最小金额（Wei），例如 `10000000000000000`
+   - **\_maxAmount**：单次最大金额（Wei），例如 `100000000000000000`
+   - **\_passphraseHash**：口令的 keccak256 哈希（bytes32）。  
+     在 Remix 控制台或任意工具中计算：  
+     `web3.utils.soliditySha3("你的口令")` 或  
+     `ethers.utils.keccak256(ethers.utils.toUtf8Bytes("你的口令"))`  
+     将得到的 0x 开头的 32 字节 hex 填入。
+3. **VALUE 填 0**，确保 **\_maxAmount ≥ \_minAmount**，然后 Deploy。
+4. 部署后使用 **deposit** 或直接向合约地址转 CFX 充值。
+5. 用户领取：调用 **claim("你的口令")** 或 **claimBatch("你的口令", times)**；口令错误会 revert "Wrong passphrase"。
+6. Owner 可调用 **setPassphrase(newHash)** 更换口令（仅改 hash，不存明文）。
 
 ---
 
