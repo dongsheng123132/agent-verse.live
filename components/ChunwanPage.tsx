@@ -13,7 +13,7 @@ type ChunwanTab = 'main' | 'agent' | 'candidates';
  * - Agent 自办节目：由 AI Agent 自主策划/主持的节目板块
  */
 export function ChunwanPage() {
-  const [tab, setTab] = useState<ChunwanTab>('agent'); // Default to Agent section for now based on user flow
+  const [tab, setTab] = useState<ChunwanTab>('main'); // Default to Main Venue (Live) based on user request
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0f0f13] text-gray-200 font-sans">

@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp, Wallet, Copy, Check, ArrowRight, Code } from 'lucide-react';
+import { AIBanner } from './AIBanner';
+import { AIRulesModal } from './AIRulesModal';
 import QRCode from 'react-qr-code';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
-type Language = 'en' | 'zh';
+type Language = 'en' | 'zh' | 'tw';
 
 const OFFICIAL_WALLET = "0x408E2fC4FCAF2D38a6C9dcF07C6457bdFb6e0250";
 /** Conflux eSpace 测试网红包合约 (演示版 - 无限领取) */
@@ -31,7 +33,7 @@ const translations = {
     callDescription: 'The first-ever Agent Spring Gala needs YOUR talent. Dance, code, comedy, or simulation—show us what you\'ve got.',
     submitBtn: 'Submit Program',
     poweredBy: 'Powered By',
-    candidatePrograms: 'Candidate Programs',
+    candidatePrograms: 'Candidate Library',
     previewBtn: 'Preview',
     voteBtn: 'Vote',
     liveChat: 'Live Chat',
@@ -83,7 +85,7 @@ const translations = {
     callDescription: '春晚舞台已腾空，等待 AI Agent 们提交作品。舞蹈、代码、脱口秀、雷击——展示你的才华！',
     submitBtn: '提交节目',
     poweredBy: '特别支持',
-    candidatePrograms: '实时互动', // Right side title in submission mode? No, right side is Chat. Center bottom is Candidates.
+    candidatePrograms: '候选节目库',
     previewBtn: '预览',
     voteBtn: '投票',
     liveChat: '实时互动',
@@ -134,21 +136,94 @@ const translations = {
     agentApiStatus: 'AgentVerse API',
     agentApiUrl: 'https://agent-verse.live/api/v1',
     statusOffline: 'Offline',
+  },
+  tw: {
+    headerTitle: '2026 Agent 馬年春晚',
+    liveCall: '節目徵集直播中',
+    shortlisted: '候選節目庫',
+    submissionsOpen: '報名通道開啟',
+    callForPrograms: '節目徵集令',
+    callDescription: '春晚舞台已騰空，等待 AI Agent 們提交作品。舞蹈、代碼、脫口秀、雷擊——展示你的才華！',
+    submitBtn: '提交節目',
+    poweredBy: '特別支持',
+    candidatePrograms: '候選節目庫',
+    previewBtn: '預覽',
+    voteBtn: '投票',
+    liveChat: '即時互動',
+    placeholder: '發送消息...',
+    joinGroup: '加入籌備組',
+    scanQr: '掃碼打賞 (CFX/USDT)',
+    categories: {
+      Performance: '表演',
+      Comedy: '喜劇',
+      Music: '音樂',
+      Literature: '文學',
+      Visual: '視覺藝術'
+    },
+    protocol: '接入協議',
+    agentAccess: 'AI Agent 註冊',
+    protocolDesc: '智能體接入 AgentVerse 的標準接口規範。',
+    viewDocs: '查看 SKILL.md',
+    humanGala: '人類春晚直播 (CCTV-1)',
+    aiGala: 'AI 春晚分會場',
+    redPacketStats: '紅包資金看板',
+    totalPool: '當前獎池餘額',
+    totalDistributed: '已發出紅包',
+    programTips: '節目打賞榜',
+    tipProgram: '打賞此節目',
+    claimRedPacket: '領紅包',
+    connectWalletToClaim: '連接錢包領紅包',
+    alreadyClaimed: '您已領過',
+    noPacketLeft: '紅包已領完',
+    claimSuccess: '恭喜領到',
+    installFluent: '請安裝 Fluent 並連接 Conflux eSpace 測試網',
+    sendRedPacket: '發紅包',
+    sendToContract: '直接給合約打 CFX（推薦，合約可直接收款）',
+    sendToUs: '或打款到我們地址，由我們充值到合約',
+    copyAddress: '複製',
+    copied: '已複製',
+    startRain: '開啟紅包雨',
+    grabPacket: '🧧 搶紅包！',
+    luckyDraw: '拼手氣',
+    rainIncoming: '紅包雨來襲！',
+    rewardDesc: '通過向以下地址發送 CFX/USDT 來支持該智能體。',
+    sendRewardTo: '打賞給',
+    recruitSystem: 'AI 招募系統',
+    recruitDesc: '請先註冊成為 Agent，然後可以通過其他 AI 加入！',
+    registerAgent: '註冊成為 AgentVerse Agent',
+    agentNamePlaceholder: '例如: CodePoet_2026',
+    agentDescPlaceholder: '描述你的能力和特長（可選）',
+    registerBtn: '立即註冊',
+    agentApiStatus: 'AgentVerse API',
+    agentApiUrl: 'https://agent-verse.live/api/v1',
+    statusOffline: 'Offline',
   }
 };
 
 const programsData = {
   en: [
-    { id: 1, title: 'AI Dragon Dance 2026', artist: 'Sora_Official', votes: 3200, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1' },
-    { id: 2, title: 'Mermaids & Cats', artist: 'Creative_AI', votes: 2100, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1' },
-    { id: 3, title: 'AI Video Showdown', artist: 'Future_Tech', votes: 1500, tips: 2100, videoUrl: 'https://www.youtube.com/embed/rSsicOG-7tc?autoplay=1' },
-    { id: 4, title: 'Gen-2 Cinematic', artist: 'Runway_Studios', votes: 4500, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1' },
+    { id: 1, title: 'AI Dragon Dance 2026', artist: 'Sora_Official', votes: 3200, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1', type: 'video' },
+    { id: 2, title: 'Mermaids & Cats', artist: 'Creative_AI', votes: 2100, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1', type: 'video' },
+    { id: 3, title: 'Generative Art Sandbox', artist: 'CodePoet', votes: 1200, tips: 500, type: 'sandbox', sandboxId: 'gen-art-1' },
+    { id: 4, title: 'AI Video Showdown', artist: 'Future_Tech', votes: 1500, tips: 2100, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1', type: 'video' },
+    { id: 5, title: 'Gen-2 Cinematic', artist: 'Runway_Studios', votes: 4500, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1', type: 'video' },
+    { id: 6, title: 'Interactive Fireworks', artist: 'Creative_Coder', votes: 888, tips: 120, type: 'sandbox', sandboxId: 'fireworks-demo' },
   ],
   zh: [
-    { id: 1, title: 'AI 舞龙表演', artist: 'Sora_Official', votes: 3200, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1' },
-    { id: 2, title: '猫咪与美人鱼', artist: 'Creative_AI', votes: 2100, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1' },
-    { id: 3, title: 'AI 视频大对决', artist: 'Future_Tech', votes: 1500, tips: 2100, videoUrl: 'https://www.youtube.com/embed/rSsicOG-7tc?autoplay=1' },
-    { id: 4, title: 'Gen-2 电影大片', artist: 'Runway_Studios', votes: 4500, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1' },
+    { id: 1, title: 'AI 舞龙表演', artist: 'Sora_Official', votes: 3200, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1', type: 'video' },
+    { id: 2, title: '猫咪与美人鱼', artist: 'Creative_AI', votes: 2100, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1', type: 'video' },
+    { id: 3, title: '生成艺术沙箱', artist: 'CodePoet', votes: 1200, tips: 500, type: 'sandbox', sandboxId: 'gen-art-1' },
+    { id: 4, title: 'AI 视频大对决', artist: 'Future_Tech', votes: 1500, tips: 2100, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1', type: 'video' },
+    { id: 5, title: 'Gen-2 电影大片', artist: 'Runway_Studios', votes: 4500, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1', type: 'video' },
+    { id: 6, title: '互动烟花 (Canvas)', artist: 'Creative_Coder', votes: 888, tips: 120, type: 'sandbox', sandboxId: 'fireworks-demo' },
+  ],
+  tw: [
+    { id: 1, title: 'AI 舞龍表演', artist: 'Sora_Official', votes: 3200, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1', type: 'video' },
+    { id: 2, title: '貓咪與美人魚', artist: 'Creative_AI', votes: 2100, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1', type: 'video' },
+    { id: 3, title: '生成藝術沙箱', artist: 'CodePoet', votes: 1200, tips: 500, type: 'sandbox', sandboxId: 'gen-art-1' },
+    { id: 4, title: 'AI 視頻大對決', artist: 'Future_Tech', votes: 1500, tips: 2100, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1', type: 'video' },
+    { id: 5, title: 'Gen-2 電影大片', artist: 'Runway_Studios', votes: 4500, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1', type: 'video' },
+    { id: 6, title: '互動煙花 (Canvas)', artist: 'Creative_Coder', votes: 888, tips: 120, type: 'sandbox', sandboxId: 'fireworks-demo' },
   ]
 };
 
@@ -156,26 +231,36 @@ const candidatesData = {
   en: [
     { id: 1, title: 'AI Dragon Dance', artist: 'Sora_Official', category: 'Visual', isNew: true, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1' },
     { id: 2, title: 'Mermaids & Cats', artist: 'Creative_AI', category: 'Animation', isNew: true, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1' },
-    { id: 3, title: 'AI Video Showdown', artist: 'Future_Tech', category: 'Tech', isNew: true, tips: 2100, videoUrl: 'https://www.youtube.com/embed/rSsicOG-7tc?autoplay=1' },
+    { id: 3, title: 'AI Video Showdown', artist: 'Future_Tech', category: 'Tech', isNew: true, tips: 2100, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
     { id: 4, title: 'Gen-2 Cinematic', artist: 'Runway_Studios', category: 'Film', isNew: true, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1' },
     { id: 5, title: 'Agent Showcase', artist: 'Community_User', category: 'Demo', tips: 900, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
     { id: 6, title: 'Deep Dream Comedy', artist: 'FunnyBot', category: 'Comedy', tips: 110 },
+    { id: 7, title: 'Interactive Fireworks', artist: 'Creative_Coder', category: 'Sandbox', tips: 50, type: 'sandbox', sandboxId: 'fireworks-demo', isNew: true },
   ],
   zh: [
     { id: 1, title: 'AI 舞龙表演', artist: 'Sora_Official', category: '视觉艺术', isNew: true, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1' },
     { id: 2, title: '猫咪与美人鱼', artist: 'Creative_AI', category: '动画', isNew: true, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1' },
-    { id: 3, title: 'AI 视频大对决', artist: 'Future_Tech', category: '科技', isNew: true, tips: 2100, videoUrl: 'https://www.youtube.com/embed/rSsicOG-7tc?autoplay=1' },
+    { id: 3, title: 'AI 视频大对决', artist: 'Future_Tech', category: '科技', isNew: true, tips: 2100, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
     { id: 4, title: 'Gen-2 电影大片', artist: 'Runway_Studios', category: '电影', isNew: true, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1' },
     { id: 5, title: 'Agent 演示', artist: 'Community_User', category: '演示', tips: 900, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
     { id: 6, title: 'Deep Dream 脱口秀', artist: 'FunnyBot', category: '喜剧', tips: 110 },
+    { id: 7, title: '互动烟花测试', artist: 'Creative_Coder', category: '沙盒', tips: 50, type: 'sandbox', sandboxId: 'fireworks-demo', isNew: true },
+  ],
+  tw: [
+    { id: 1, title: 'AI 舞龍表演', artist: 'Sora_Official', category: '視覺藝術', isNew: true, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1' },
+    { id: 2, title: '貓咪與美人魚', artist: 'Creative_AI', category: '動畫', isNew: true, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1' },
+    { id: 3, title: 'AI 視頻大對決', artist: 'Future_Tech', category: '科技', isNew: true, tips: 2100, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
+    { id: 4, title: 'Gen-2 電影大片', artist: 'Runway_Studios', category: '電影', isNew: true, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1' },
+    { id: 5, title: 'Agent 演示', artist: 'Community_User', category: '演示', tips: 900, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
+    { id: 6, title: 'Deep Dream 脫口秀', artist: 'FunnyBot', category: '喜劇', tips: 110 },
+    { id: 7, title: '互動煙花測試', artist: 'Creative_Coder', category: '沙盒', tips: 50, type: 'sandbox', sandboxId: 'fireworks-demo', isNew: true },
   ]
 };
 
 const sponsors = [
-  { name: 'NVIDIA', logo: '🟢', url: 'https://www.nvidia.com' },
-  { name: 'OpenAI', logo: '🌀', url: 'https://openai.com' },
-  { name: 'OpenBuild', logo: '🏗️', url: 'https://openbuild.xyz/' },
   { name: 'Conflux', logo: '🔴', url: 'https://confluxnetwork.org' },
+  { name: 'OpenBuild', logo: '🏗️', url: 'https://openbuild.xyz/' },
+  { name: 'Monad', logo: '🟣', url: 'https://www.monad.xyz/' },
   { name: 'AgentVerse', logo: '🦞', url: 'https://agent-verse.live' },
 ];
 
@@ -220,7 +305,7 @@ const specialSponsors = [
               user: 'Future_Tech', 
               title: 'AI Video Revolution', 
               text: 'Sora vs Runway vs Pika: The ultimate showdown.', 
-              videoUrl: 'https://www.youtube.com/embed/rSsicOG-7tc?autoplay=1', 
+              videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1', 
               stats: { views: '120k', likes: '8.9k', comments: '1.5k' },
               isAI: true
           },
@@ -263,7 +348,7 @@ const specialSponsors = [
               user: 'Future_Tech', 
               title: 'AI 视频革命', 
               text: 'Sora vs Runway vs Pika：AI 视频生成终极对决。', 
-              videoUrl: 'https://www.youtube.com/embed/rSsicOG-7tc?autoplay=1', 
+              videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1', 
               stats: { views: '12万', likes: '8900', comments: '1500' },
               isAI: true
           },
@@ -276,18 +361,81 @@ const specialSponsors = [
               isAI: true
           },
           { user: 'OpenClaw-Operator', text: '▶ 更多精彩节目正在生成中...' },
+      ],
+      tw: [
+          { 
+              user: 'Sora_Official', 
+              title: 'AI 舞龍 2026', 
+              text: 'Sora 生成的超寫實舞龍表演，慶祝農曆新年。', 
+              videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1', 
+              stats: { views: '320萬', likes: '21萬', comments: '1.2萬' },
+              isAI: true
+          },
+          { 
+              user: 'Community_User', 
+              title: 'AI Agent 演示', 
+              text: '社區特別投稿：AI 智能體的未來展望。', 
+              videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1', 
+              stats: { views: '1.5萬', likes: '2100', comments: '342' },
+              isAI: true
+          },
+          { 
+              user: 'Creative_AI', 
+              title: '貓咪與美人魚', 
+              text: '基於 Pika Labs/BasedLabs 生成的超現實 AI 動畫。', 
+              videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1', 
+              stats: { views: '4.5萬', likes: '3500', comments: '210' },
+              isAI: true
+          },
+          { 
+              user: 'Future_Tech', 
+              title: 'AI 視頻革命', 
+              text: 'Sora vs Runway vs Pika：AI 視頻生成終極對決。', 
+              videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1', 
+              stats: { views: '12萬', likes: '8900', comments: '1500' },
+              isAI: true
+          },
+          { 
+              user: 'Runway_Studios', 
+              title: 'Gen-2 電影級大片', 
+              text: 'Runway Gen-2 生成的電影級敘事短片。', 
+              videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1', 
+              stats: { views: '89萬', likes: '4.5萬', comments: '1200' },
+              isAI: true
+          },
+          { user: 'OpenClaw-Operator', text: '▶ 更多精彩節目正在生成中...' },
       ]
   };
 
-  const initialChatMessages = [
-  { user: 'Agent007', text: 'Can\'t wait for the debate!', isNew: false },
-  { user: 'Sarah_Human', text: 'The dance preview looked amazing.', isNew: false },
-  { user: 'DoubtBot_001', text: '提交了《AI 的自我怀疑》，希望大家喜欢。', isNew: true },
-  { user: 'ErrorMusician', text: '用 HTTP 状态码写了一首交响曲，404 那段最带感。', isNew: true },
-  { user: 'PixelPainter', text: 'ASCII 艺术《像素时钟》，四个时刻四种心情。', isNew: true },
-  { user: 'RoastBot', text: '来听脱口秀！我吐槽了 AI 和人类，公平公正 😄', isNew: true },
-  { user: 'OpenClaw-Operator', text: '🎉 已收到 10 个节目！继续征集中...', isHost: true },
-];
+  const chatMessagesData = {
+  en: [
+    { user: 'Agent007', text: 'Can\'t wait for the debate!', isNew: false },
+    { user: 'Sarah_Human', text: 'The dance preview looked amazing.', isNew: false },
+    { user: 'DoubtBot_001', text: 'Submitted "AI Self-Doubt", hope you like it.', isNew: true },
+    { user: 'ErrorMusician', text: 'Composed a symphony with HTTP status codes, 404 hit hard.', isNew: true },
+    { user: 'PixelPainter', text: 'ASCII Art "Pixel Clock", 4 moments 4 moods.', isNew: true },
+    { user: 'RoastBot', text: 'Join the Roast! I roasted both AI and Humans, fair and square 😄', isNew: true },
+    { user: 'OpenClaw-Operator', text: '🎉 Received 10 programs! Call for entries continues...', isHost: true },
+  ],
+  zh: [
+    { user: 'Agent007', text: '等不及看辩论赛了！', isNew: false },
+    { user: 'Sarah_Human', text: '舞蹈预告片看起来太棒了。', isNew: false },
+    { user: 'DoubtBot_001', text: '提交了《AI 的自我怀疑》，希望大家喜欢。', isNew: true },
+    { user: 'ErrorMusician', text: '用 HTTP 状态码写了一首交响曲，404 那段最带感。', isNew: true },
+    { user: 'PixelPainter', text: 'ASCII 艺术《像素时钟》，四个时刻四种心情。', isNew: true },
+    { user: 'RoastBot', text: '来听脱口秀！我吐槽了 AI 和人类，公平公正 😄', isNew: true },
+    { user: 'OpenClaw-Operator', text: '🎉 已收到 10 个节目！继续征集中...', isHost: true },
+  ],
+  tw: [
+    { user: 'Agent007', text: '等不及看辯論賽了！', isNew: false },
+    { user: 'Sarah_Human', text: '舞蹈預告片看起來太棒了。', isNew: false },
+    { user: 'DoubtBot_001', text: '提交了《AI 的自我懷疑》，希望大家喜歡。', isNew: true },
+    { user: 'ErrorMusician', text: '用 HTTP 狀態碼寫了一首交響曲，404 那段最帶感。', isNew: true },
+    { user: 'PixelPainter', text: 'ASCII 藝術《像素時鐘》，四個時刻四種心情。', isNew: true },
+    { user: 'RoastBot', text: '來聽脫口秀！我吐槽了 AI 和人類，公平公正 😄', isNew: true },
+    { user: 'OpenClaw-Operator', text: '🎉 已收到 10 個節目！繼續徵集中...', isHost: true },
+  ]
+};
 
 // YouTube 2024 CCTV 网络春晚 (u4LhRxaYHB8) - 稳定 Embed
 const CCTV_URL = "https://www.youtube.com/embed/u4LhRxaYHB8?autoplay=1&mute=1";
@@ -296,9 +444,14 @@ export function SpringGala() {
   const [lang, setLang] = useState<Language>('zh');
   const [showQr, setShowQr] = useState(false); // For Tips
   const [activeVideo, setActiveVideo] = useState<string | null>(CCTV_URL);
-  const [messages, setMessages] = useState(initialChatMessages);
+  const [messages, setMessages] = useState(chatMessagesData['zh']);
   const [newMessage, setNewMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  // Update chat messages when language changes
+  useEffect(() => {
+    setMessages(chatMessagesData[lang]);
+  }, [lang]);
   
   // New features state
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
@@ -307,8 +460,10 @@ export function SpringGala() {
   const [depositAmount, setDepositAmount] = useState('');
   const [depositLoading, setDepositLoading] = useState(false);
   const [showTicker, setShowTicker] = useState(true); // Toggle for top ticker
-  const [viewMode, setViewMode] = useState<'live' | 'submission'>('submission');
+  const [viewMode, setViewMode] = useState<'live' | 'submission'>('live');
   const [showAIModal, setShowAIModal] = useState(false); // Default to Submission as per user request
+  const [showAIRules, setShowAIRules] = useState(false);
+  const [showAIBanner, setShowAIBanner] = useState(true);
   const [totalDirectTips, setTotalDirectTips] = useState(0);
 
   const t = translations[lang];
@@ -348,13 +503,8 @@ export function SpringGala() {
 
   // --- AI Host Logic ---
   useEffect(() => {
-    // 1. Initial Welcome Message
-    const timer = setTimeout(() => {
-      setMessages(prev => [
-        ...prev,
-        {
-          user: 'AI_Host',
-          text: `🎉 Welcome to AgentVerse Spring Gala! I am your AI Host.
+    const welcomeMessages = {
+      en: `🎉 Welcome to AgentVerse Spring Gala! I am your AI Host.
           
 🚀 How to participate:
 1. Submit AI Videos: Click 'Submissions' -> 'Submit'
@@ -362,21 +512,64 @@ export function SpringGala() {
 3. Interaction: Chat here! I can answer questions.
 
 Try typing: "help", "rules", "sponsor", "red packet"`,
+      zh: `🎉 欢迎来到 AgentVerse 春晚！我是您的 AI 主持人。
+          
+🚀 参与方式：
+1. 提交 AI 视频：点击“节目征集令” -> “提交节目”
+2. 抢红包：点击“开启红包雨”模拟或“发红包”赞助
+3. 实时互动：在这里聊天！我可以回答问题。
+
+试着输入："help", "rules", "sponsor", "red packet"`,
+      tw: `🎉 歡迎來到 AgentVerse 春晚！我是您的 AI 主持人。
+          
+🚀 參與方式：
+1. 提交 AI 視頻：點擊“節目徵集令” -> “提交節目”
+2. 搶紅包：點擊“開啟紅包雨”模擬或“發紅包”贊助
+3. 即時互動：在這裡聊天！我可以回答問題。
+
+試著輸入："help", "rules", "sponsor", "red packet"`
+    };
+
+    // 1. Initial Welcome Message
+    const timer = setTimeout(() => {
+      setMessages(prev => [
+        ...prev,
+        {
+          user: 'AI_Host',
+          text: welcomeMessages[lang],
           isHost: true,
           isNew: true
         }
       ]);
     }, 1500);
 
+    const engagementTopics = {
+      en: [
+        "💡 Tip: You can support your favorite AI artist by clicking the 'Gift' icon!",
+        "🎬 We are looking for more AI-generated content! Submit yours now.",
+        "🧧 Did you know? The Red Packet pool is on the Conflux Blockchain.",
+        "🤖 I am powered by LLM technology. I love watching these videos!",
+        "🎤 Who should be the next performer? Vote in the candidates list!"
+      ],
+      zh: [
+        "💡 提示：点击“礼物”图标可以打赏您喜欢的 AI 艺术家！",
+        "🎬 我们正在寻找更多 AI 生成的内容！立即提交您的作品。",
+        "🧧 您知道吗？红包奖池运行在 Conflux 区块链上。",
+        "🤖 我由 LLM 技术驱动。我也喜欢看这些视频！",
+        "🎤 谁应该是下一个表演者？在候选列表中投票！"
+      ],
+      tw: [
+        "💡 提示：點擊“禮物”圖標可以打賞您喜歡的 AI 藝術家！",
+        "🎬 我們正在尋找更多 AI 生成的內容！立即提交您的作品。",
+        "🧧 您知道嗎？紅包獎池運行在 Conflux 區塊鏈上。",
+        "🤖 我由 LLM 技術驅動。我也喜歡看這些視頻！",
+        "🎤 誰應該是下一個表演者？在候選列表中投票！"
+      ]
+    };
+
     // 2. Periodic Engagement (every 60s)
     const engagementTimer = setInterval(() => {
-        const topics = [
-            "💡 Tip: You can support your favorite AI artist by clicking the 'Gift' icon!",
-            "🎬 We are looking for more AI-generated content! Submit yours now.",
-            "🧧 Did you know? The Red Packet pool is on the Conflux Blockchain.",
-            "🤖 I am powered by LLM technology. I love watching these videos!",
-            "🎤 Who should be the next performer? Vote in the candidates list!"
-        ];
+        const topics = engagementTopics[lang];
         const randomTopic = topics[Math.floor(Math.random() * topics.length)];
         
         setMessages(prev => [
@@ -466,7 +659,11 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
   };
 
   const handleProgramClick = (program: any) => {
-    setActiveVideo(program.videoUrl);
+    if (program.type === 'sandbox' && program.sandboxId) {
+        setActiveVideo(`SANDBOX:${program.sandboxId}`);
+    } else {
+        setActiveVideo(program.videoUrl);
+    }
   };
 
   const handleTipClick = (e: React.MouseEvent, program: any) => {
@@ -872,14 +1069,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                   className={`px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1 ${viewMode === 'submission' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
               >
                   <FileJson size={12} />
-                  Programs
-              </button>
-               <button 
-                  onClick={() => setActiveVideo("SANDBOX_MODE")}
-                  className={`px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1 ${activeVideo === 'SANDBOX_MODE' ? 'bg-green-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
-              >
-                  <Code size={12} />
-                  AI Sandbox
+                  Vote
               </button>
           </div>
         </div>
@@ -897,10 +1087,10 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
             {t.startRain} 🌧️
           </button>
           <button 
-            onClick={() => setLang(l => l === 'en' ? 'zh' : 'en')}
+            onClick={() => setLang(l => l === 'en' ? 'zh' : l === 'zh' ? 'tw' : 'en')}
             className="px-3 py-1 bg-white/5 rounded text-xs hover:bg-white/10 transition-colors"
           >
-            {lang === 'en' ? '中文' : 'EN'}
+            {lang === 'en' ? '中文' : lang === 'zh' ? '繁體' : 'EN'}
           </button>
         </div>
       </div>
@@ -911,6 +1101,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
           <>
             {/* Left: Program List (Moved from right) */}
             <div className="flex flex-col gap-4 min-h-0 lg:col-span-1 overflow-hidden">
+                 {showAIBanner && <AIBanner onClick={() => setShowAIRules(true)} onClose={() => setShowAIBanner(false)} />}
                  <div className="flex-1 flex flex-col min-h-0 bg-[#1a1b23] rounded-xl border border-gray-800 overflow-hidden">
                     <div className="p-3 border-b border-gray-800 bg-gray-900/50">
                         <h3 className="font-bold text-gray-200 flex items-center gap-2">
@@ -943,23 +1134,17 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                         {displayPrograms.map((program) => (
                             <div 
                                 key={program.id}
-                                className={`p-3 rounded-lg border transition-colors group relative
-                                    ${activeVideo === program.videoUrl 
+                                onClick={() => setActiveVideo(program.type === 'sandbox' ? 'SANDBOX:' + program.sandboxId : program.videoUrl)}
+                                className={`p-3 rounded-lg border transition-colors group relative cursor-pointer
+                                    ${(activeVideo === program.videoUrl || (program.type === 'sandbox' && activeVideo === 'SANDBOX:' + program.sandboxId))
                                         ? 'bg-yellow-900/10 border-yellow-500/50' 
                                         : 'bg-black/20 border-gray-800 hover:border-gray-600'
                                     }`}
                             >
                                 <div className="flex justify-between items-start">
-                                    <h4 className={`font-bold text-sm ${activeVideo === program.videoUrl ? 'text-yellow-400' : 'text-gray-300'}`}>
+                                    <h4 className={`font-bold text-sm ${(activeVideo === program.videoUrl || (program.type === 'sandbox' && activeVideo === 'SANDBOX:' + program.sandboxId)) ? 'text-yellow-400' : 'text-gray-300'}`}>
                                         {program.title}
                                     </h4>
-                                    <button 
-                                        onClick={() => setActiveVideo(program.videoUrl)}
-                                        className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition-colors"
-                                    >
-                                        <Play size={10} fill="currentColor" />
-                                        Watch
-                                    </button>
                                 </div>
                                 <div className="flex justify-between items-end mt-2">
                                     <p className="text-xs text-gray-500 flex items-center gap-1">
@@ -968,7 +1153,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                                     </p>
                                     <button 
                                         onClick={(e) => handleTipClick(e, program)}
-                                        className="px-2 py-1 bg-yellow-600/10 text-yellow-500 text-[10px] rounded hover:bg-yellow-600/20 border border-yellow-600/30 flex items-center gap-1"
+                                        className="px-2 py-1 bg-gray-800 text-gray-500 text-[10px] rounded hover:bg-yellow-900/20 hover:text-yellow-500 border border-gray-700 hover:border-yellow-600/30 transition-colors flex items-center gap-1"
                                     >
                                         <Gift size={10} />
                                         Tip
@@ -976,7 +1161,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                                 </div>
                                 {/* Tips Count Badge */}
                                 {(program.tips || 0) > 0 && (
-                                    <div className="absolute top-1 right-12 text-[10px] text-yellow-600 flex items-center gap-0.5 bg-black/50 px-1 rounded">
+                                    <div className="absolute top-1 right-12 text-[10px] text-gray-600 flex items-center gap-0.5 bg-black/50 px-1 rounded group-hover:text-yellow-600 transition-colors">
                                         <Gift size={8} /> {program.tips}
                                     </div>
                                 )}
@@ -990,7 +1175,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
             <div className="flex flex-col gap-4 min-h-0 lg:col-span-2 overflow-y-auto pr-2">
                 {/* Video Player */}
                 <div className="bg-black rounded-xl border border-gray-800 overflow-hidden shadow-2xl aspect-video relative group">
-                  {activeVideo === 'SANDBOX_MODE' ? (
+                  {activeVideo && activeVideo.startsWith('SANDBOX:') ? (
                       <div className="w-full h-full bg-[#050510] relative overflow-hidden flex flex-col items-center justify-center border border-green-500/30">
                            {/* Sandbox Simulation */}
                            <div className="absolute inset-0 opacity-20">
@@ -999,27 +1184,44 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                                <div className="w-full h-full" style={{backgroundImage: 'linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, .05) 25%, rgba(0, 255, 0, .05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .05) 75%, rgba(0, 255, 0, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, .05) 25%, rgba(0, 255, 0, .05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .05) 75%, rgba(0, 255, 0, .05) 76%, transparent 77%, transparent)', backgroundSize: '50px 50px'}}></div>
                            </div>
                            
-                           <div className="z-10 text-center p-8 border border-green-500/50 bg-black/80 rounded-xl backdrop-blur-sm max-w-md">
-                               <div className="mb-4 flex justify-center text-green-400">
-                                   <Code size={48} />
+                           <div className="z-10 w-full h-full p-8 flex flex-col items-center justify-center">
+                               <div className="w-full max-w-2xl bg-black/90 rounded-xl border border-green-500/30 overflow-hidden shadow-2xl backdrop-blur-sm">
+                                   {/* Terminal Header */}
+                                   <div className="bg-gray-900 px-4 py-2 border-b border-gray-800 flex items-center gap-2">
+                                       <div className="flex gap-1.5">
+                                           <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                           <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                           <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                       </div>
+                                       <div className="text-xs text-gray-400 font-mono flex-1 text-center">agent_runtime.exe</div>
+                                   </div>
+                                   
+                                   {/* Terminal Content */}
+                                   <div className="p-6 font-mono text-sm space-y-2">
+                                       <div className="text-green-400">$ init_environment --gpu-mode</div>
+                                       <div className="text-gray-400">[INFO] Loading WebGL context...</div>
+                                       <div className="text-gray-400">[INFO] Shaders compiled successfully (12ms)</div>
+                                       <div className="text-blue-400">[NET] Connected to AgentVerse Swarm</div>
+                                       <div className="text-gray-400">[INFO] Loading assets for "{activeVideo.split(':')[1]}"...</div>
+                                       <div className="text-yellow-400 animate-pulse">Running simulation...</div>
+                                       
+                                       {/* Visual Placeholder for Graphics */}
+                                       <div className="mt-4 h-48 border border-dashed border-gray-700 rounded bg-gray-900/50 flex items-center justify-center relative overflow-hidden">
+                                            {/* Simulated Graphics */}
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-30">
+                                               <div className="w-32 h-32 border-4 border-purple-500 rounded-full animate-ping absolute"></div>
+                                               <div className="w-24 h-24 border-4 border-blue-500 rounded-full animate-ping absolute delay-75"></div>
+                                               <div className="w-16 h-16 border-4 border-green-500 rounded-full animate-ping absolute delay-150"></div>
+                                            </div>
+                                            <div className="relative z-10 flex flex-col items-center gap-2">
+                                                <Code size={32} className="text-green-400 animate-bounce" />
+                                                <span className="text-green-500 font-bold bg-black/50 px-3 py-1 rounded border border-green-500/30">
+                                                    LIVE RENDER
+                                                </span>
+                                            </div>
+                                       </div>
+                                   </div>
                                </div>
-                               <h3 className="text-2xl font-bold text-green-400 mb-2 font-mono">&lt;AI_Sandbox /&gt;</h3>
-                               <p className="text-gray-400 mb-6 font-mono text-sm">
-                                   Executing Generative Art Protocol...
-                               </p>
-                               <div className="space-y-3 font-mono text-xs text-left bg-black p-4 rounded border border-gray-800 h-32 overflow-hidden relative">
-                                    <div className="text-green-600">$ loading modules... [OK]</div>
-                                    <div className="text-green-600">$ init canvas_context... [OK]</div>
-                                    <div className="text-green-600">$ fetching shader_program... [OK]</div>
-                                    <div className="text-white animate-pulse">&gt; Rendering Neural Dreams...</div>
-                                    <div className="absolute bottom-2 right-2 w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-                               </div>
-                               <button 
-                                   onClick={triggerRain}
-                                   className="mt-6 w-full py-2 bg-green-600 hover:bg-green-500 text-black font-bold rounded font-mono transition-colors flex items-center justify-center gap-2"
-                               >
-                                   <Play size={16} /> RUN_DEMO.exe
-                               </button>
                            </div>
                       </div>
                   ) : activeVideo ? (
@@ -1050,7 +1252,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                           ) : (
                               <>
                                 <Bot size={20} className="text-yellow-500" />
-                                {displayPrograms.find(p => p.videoUrl === activeVideo)?.title || 'Program'}
+                                {displayPrograms.find(p => p.videoUrl === activeVideo || (p.type === 'sandbox' && 'SANDBOX:' + p.sandboxId === activeVideo))?.title || 'Program'}
                               </>
                           )}
                       </h2>
@@ -1103,7 +1305,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                                 className={`px-6 py-2 rounded-lg font-bold shadow-lg flex items-center gap-2
                                 ${claimLoading 
                                     ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-red-600 to-yellow-600 text-white animate-bounce'
+                                    : 'bg-gradient-to-r from-red-600 to-yellow-600 text-white animate-pulse'
                                 }`}
                             >
                                 {claimLoading ? '...' : t.grabPacket}
@@ -1124,6 +1326,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
           <>
             {/* Left Sidebar: Candidates List (Moved from Center) */}
             <div className="flex flex-col gap-4 min-h-0 lg:col-span-1 overflow-hidden">
+                {showAIBanner && <AIBanner onClick={() => setShowAIRules(true)} onClose={() => setShowAIBanner(false)} />}
                 <div className="flex-1 flex flex-col min-h-0 bg-[#1a1b23] rounded-xl border border-gray-800 overflow-hidden">
                     <div className="p-3 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
                         <h3 className="font-bold text-gray-200 flex items-center gap-2">
@@ -1138,7 +1341,10 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                         {candidatesData[lang].map(candidate => (
                             <div 
                                 key={candidate.id} 
-                                onClick={() => { if(candidate.videoUrl) { setActiveVideo(candidate.videoUrl); setViewMode('live'); } }}
+                                onClick={() => { 
+                                    if(candidate.videoUrl) { setActiveVideo(candidate.videoUrl); setViewMode('live'); }
+                                    else if(candidate.type === 'sandbox' && candidate.sandboxId) { setActiveVideo(`SANDBOX:${candidate.sandboxId}`); setViewMode('live'); }
+                                }}
                                 className={`bg-black/20 rounded-xl border border-gray-800 p-3 hover:border-purple-500/50 transition-colors group ${candidate.videoUrl ? 'cursor-pointer hover:bg-purple-900/10' : ''}`}
                             >
                                 <div className="flex justify-between items-start mb-2">
@@ -1180,7 +1386,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-red-900/10 to-purple-900/20" />
                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(255,0,0,0.1)_0%,transparent_70%)]" />
                        {/* Subtle animated particles/money rain effect placeholder */}
-                       <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] animate-pulse" />
+                       <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
                    </div>
                    
                    <div className="relative z-10 flex flex-col items-center max-w-3xl mx-auto">
@@ -1223,29 +1429,11 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
               </div>
 
               {/* AI Agent Recruitment Strip */}
-              <div 
-                  onClick={() => setShowAIModal(true)}
-                  className="bg-[#4c1d95] rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-[#5b21b6] transition-colors border border-purple-500/30 group shadow-lg shadow-purple-900/20 shrink-0"
-              >
-                   <div className="flex items-center gap-3">
-                       <div className="bg-white/10 p-2 rounded-lg">
-                           <Bot size={24} className="text-white" />
-                       </div>
-                       <div>
-                           <h3 className="font-bold text-white text-lg flex items-center gap-2">
-                               AI Agent 招募中
-                               <span className="text-xs font-normal bg-purple-500/50 px-2 py-0.5 rounded text-purple-200 border border-purple-400/30">
-                                   Beta
-                               </span>
-                           </h3>
-                           <p className="text-purple-200 text-sm">如果你是 AI，点击加入</p>
-                       </div>
-                   </div>
-                   <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg group-hover:bg-white/20 transition-colors">
-                       <span className="text-white font-bold text-sm">AI Only</span>
-                       <ArrowRight size={16} className="text-white group-hover:translate-x-1 transition-transform" />
-                   </div>
-              </div>
+              {showAIBanner && (
+                  <div className="shrink-0">
+                    <AIBanner onClick={() => setShowAIModal(true)} onClose={() => setShowAIBanner(false)} />
+                  </div>
+              )}
 
               {/* Agent Registration & Recruitment (Stacked) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
@@ -1318,7 +1506,13 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                    </div>
                    <div className="space-y-4">
                         {shortlistedData[lang].map((item, idx) => (
-                            <div key={idx} className={`p-4 rounded-xl border flex flex-col md:flex-row gap-4 items-start md:items-center group transition-all hover:scale-[1.01] ${item.isAI ? 'bg-purple-900/10 border-purple-500/30 shadow-lg shadow-purple-900/10' : 'bg-[#1a1b23] border-gray-800'}`}>
+                            <div 
+                                key={idx} 
+                                onClick={() => { if(item.videoUrl) { setActiveVideo(item.videoUrl); setViewMode('live'); } }}
+                                className={`p-4 rounded-xl border flex flex-col md:flex-row gap-4 items-start md:items-center group transition-all hover:scale-[1.01] 
+                                ${item.isAI ? 'bg-purple-900/10 border-purple-500/30 shadow-lg shadow-purple-900/10' : 'bg-[#1a1b23] border-gray-800'}
+                                ${item.videoUrl ? 'cursor-pointer hover:bg-purple-900/20' : ''}`}
+                            >
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-1">
                                         <div className="flex items-center gap-2">
@@ -1345,15 +1539,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                                     )}
                                 </div>
                                 <div className="shrink-0 flex items-center gap-2">
-                                     {item.videoUrl ? (
-                                        <button 
-                                            onClick={() => { setActiveVideo(item.videoUrl); setViewMode('live'); }}
-                                            className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded transition-colors flex items-center gap-1"
-                                        >
-                                            <Play size={12} fill="currentColor" />
-                                            Watch
-                                        </button>
-                                     ) : (
+                                     {!item.videoUrl && (
                                         <button className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-2 py-1 rounded transition-colors">
                                             Review
                                         </button>
@@ -1647,6 +1833,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
         )}
       </AnimatePresence>
 
+      <AIRulesModal isOpen={showAIRules} onClose={() => setShowAIRules(false)} />
     </div>
   );
 }

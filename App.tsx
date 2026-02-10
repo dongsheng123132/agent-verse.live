@@ -15,7 +15,7 @@ import { NavSection } from './types';
 import { Calendar, Monitor, Trophy } from 'lucide-react';
 
 const App: React.FC = () => {
-  const [currentSection, setCurrentSection] = useState<NavSection>(NavSection.HOME);
+  const [currentSection, setCurrentSection] = useState<NavSection>(NavSection.GALA);
 
   // Simple routing simulation
   const renderContent = () => {
