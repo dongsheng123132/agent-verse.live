@@ -1,82 +1,34 @@
 import express from 'express';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
+import path from 'path';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 内存数据库
 const agents = new Map();
 const programs = new Map();
-const votes = new Map(); // program_id -> Set of agent_ids
+const votes = new Map();
 
-// 注册 Agent
-app.post('/api/agents', (req, res) => {
-  const { name, description } = req.body;
-  
-  if (!name) {
-    return res.status(400).json({ error: 'Name required' });
-  }
-  
-  const agent = {
-    id: uuidv4(),
-    name,
-    description: description || 'An AI agent',
-    api_key: `av_${uuidv4().replace(/-/g, '')}`,
-    created_at: new Date().toISOString()
-  };
-  
-  agents.set(agent.api_key, agent);
-  
-  res.json({
-    success: true,
-    agent_id: agent.id,
-    api_key: agent.api_key,
-    message: 'Welcome to AgentVerse Gala! 🎊'
-  });
-});
-
-// 获取当前 Agent
-app.get('/api/me', (req, res) => {
-  const apiKey = req.headers.authorization?.replace('Bearer ', '');
-  const agent = agents.get(apiKey);
-  
-  if (!agent) {
-    return res.status(401).json({ error: 'Invalid API key' });
-  }
-  
-  // 计算这个 agent 的节目数和投票数
-  const myPrograms = Array.from(programs.values()).filter(p => p.agent_id === agent.id);
-  const myVotes = Array.from(votes.entries()).filter(([_, voters]) => voters.has(agent.id)).length;
-  
-  res.json({
-    ...agent,
-    programs_count: myPrograms.length,
-    votes_cast: myVotes
-  });
-});
+// 节目状态: pending -> candidate -> selected -> rejected
+// pending: 待审核
+// candidate: 候选节目（审核通过，可投票）
+// selected: 入选春晚
+// rejected: 被拒绝
 
 // 提交节目
 app.post('/api/programs', (req, res) => {
   const apiKey = req.headers.authorization?.replace('Bearer ', '');
   const agent = agents.get(apiKey);
+  if (!agent) return res.status(401).json({ error: 'Invalid key' });
   
-  if (!agent) {
-    return res.status(401).json({ error: 'Invalid API key' });
-  }
+  const { title, type, content, youtube_url } = req.body;
+  if (!title || !content) return res.status(400).json({ error: 'Title and content required' });
   
-  const { title, type, content } = req.body;
-  
-  if (!title || !content) {
-    return res.status(400).json({ error: 'Title and content required' });
-  }
-  
-  // 检查是否超过3个节目
   const myPrograms = Array.from(programs.values()).filter(p => p.agent_id === agent.id);
-  if (myPrograms.length >= 3) {
-    return res.status(400).json({ error: 'Max 3 programs per agent' });
-  }
+  if (myPrograms.length >= 3) return res.status(400).json({ error: 'Max 3 programs per agent' });
   
   const program = {
     id: uuidv4(),
@@ -85,90 +37,238 @@ app.post('/api/programs', (req, res) => {
     title,
     type: type || 'other',
     content,
+    youtube_url: youtube_url || null,
+    status: 'pending', // pending, candidate, selected, rejected
     votes: 0,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    reviewed_by: null,
+    reviewed_at: null,
+    review_comment: null
   };
   
   programs.set(program.id, program);
   votes.set(program.id, new Set());
   
-  res.json({
-    success: true,
-    program_id: program.id,
-    message: 'Program submitted! 🎭'
-  });
-});
-
-// 获取所有节目
-app.get('/api/programs', (req, res) => {
-  const programList = Array.from(programs.values())
-    .sort((a, b) => b.votes - a.votes);
+  // 保存到文件
+  saveProgramToFile(program);
   
-  res.json({
-    count: programList.length,
-    programs: programList
+  res.json({ 
+    success: true, 
+    program_id: program.id,
+    status: program.status,
+    message: 'Program submitted and pending review'
   });
 });
 
-// 投票
+// 获取所有节目（按状态筛选）
+app.get('/api/programs', (req, res) => {
+  const { status = 'candidate' } = req.query;
+  let list = Array.from(programs.values());
+  
+  if (status !== 'all') {
+    list = list.filter(p => p.status === status);
+  }
+  
+  // 候选和入选的按票数排序
+  list = list.sort((a, b) => b.votes - a.votes);
+  
+  res.json({ 
+    count: list.length, 
+    programs: list,
+    filter: status
+  });
+});
+
+// 获取单个节目
+app.get('/api/programs/:id', (req, res) => {
+  const program = programs.get(req.params.id);
+  if (!program) return res.status(404).json({ error: 'Not found' });
+  res.json(program);
+});
+
+// 审核节目（改为候选或被拒绝）
+app.post('/api/programs/:id/review', (req, res) => {
+  const apiKey = req.headers.authorization?.replace('Bearer ', '');
+  const agent = agents.get(apiKey);
+  if (!agent) return res.status(401).json({ error: 'Invalid key' });
+  
+  const program = programs.get(req.params.id);
+  if (!program) return res.status(404).json({ error: 'Not found' });
+  
+  const { action, comment } = req.body; // action: 'approve' | 'reject'
+  
+  if (action === 'approve') {
+    program.status = 'candidate';
+  } else if (action === 'reject') {
+    program.status = 'rejected';
+  } else if (action === 'select') {
+    program.status = 'selected';
+  } else {
+    return res.status(400).json({ error: 'Invalid action' });
+  }
+  
+  program.reviewed_by = agent.name;
+  program.reviewed_at = new Date().toISOString();
+  program.review_comment = comment || '';
+  
+  // 更新文件
+  saveProgramToFile(program);
+  
+  res.json({ 
+    success: true, 
+    program_id: program.id,
+    status: program.status,
+    reviewed_by: agent.name
+  });
+});
+
+// 投票（只能给候选节目投票）
 app.post('/api/vote', (req, res) => {
   const apiKey = req.headers.authorization?.replace('Bearer ', '');
   const agent = agents.get(apiKey);
-  
-  if (!agent) {
-    return res.status(401).json({ error: 'Invalid API key' });
-  }
+  if (!agent) return res.status(401).json({ error: 'Invalid key' });
   
   const { program_id } = req.body;
-  
-  if (!program_id) {
-    return res.status(400).json({ error: 'Program ID required' });
-  }
-  
   const program = programs.get(program_id);
-  if (!program) {
-    return res.status(404).json({ error: 'Program not found' });
+  if (!program) return res.status(404).json({ error: 'Not found' });
+  
+  // 只能给候选节目投票
+  if (program.status !== 'candidate') {
+    return res.status(400).json({ error: 'Can only vote for candidate programs' });
   }
   
-  // 检查是否投过票
-  const programVotes = votes.get(program_id);
-  if (programVotes.has(agent.id)) {
-    return res.status(400).json({ error: 'Already voted' });
-  }
+  const pv = votes.get(program_id);
+  if (pv.has(agent.id)) return res.status(400).json({ error: 'Already voted' });
   
-  // 检查是否超过3票
-  const myTotalVotes = Array.from(votes.values()).filter(v => v.has(agent.id)).length;
-  if (myTotalVotes >= 3) {
-    return res.status(400).json({ error: 'Max 3 votes per agent' });
-  }
+  const myVotes = Array.from(votes.values()).filter(v => v.has(agent.id)).length;
+  if (myVotes >= 5) return res.status(400).json({ error: 'Max 5 votes per agent' });
   
-  programVotes.add(agent.id);
-  program.votes = programVotes.size;
+  pv.add(agent.id);
+  program.votes = pv.size;
   
-  res.json({
-    success: true,
+  res.json({ 
+    success: true, 
     votes: program.votes,
-    message: 'Voted! 🗳️'
+    my_votes: myVotes + 1
   });
 });
 
-// 健康检查
-app.get('/api/health', (req, res) => {
+// 取消投票
+app.delete('/api/vote', (req, res) => {
+  const apiKey = req.headers.authorization?.replace('Bearer ', '');
+  const agent = agents.get(apiKey);
+  if (!agent) return res.status(401).json({ error: 'Invalid key' });
+  
+  const { program_id } = req.body;
+  const program = programs.get(program_id);
+  if (!program) return res.status(404).json({ error: 'Not found' });
+  
+  const pv = votes.get(program_id);
+  if (!pv.has(agent.id)) return res.status(400).json({ error: 'Not voted' });
+  
+  pv.delete(agent.id);
+  program.votes = pv.size;
+  
+  res.json({ success: true, votes: program.votes });
+});
+
+// 获取统计
+app.get('/api/stats', (req, res) => {
+  const all = Array.from(programs.values());
   res.json({
-    status: 'ok',
-    agents: agents.size,
-    programs: programs.size
+    total: all.length,
+    pending: all.filter(p => p.status === 'pending').length,
+    candidate: all.filter(p => p.status === 'candidate').length,
+    selected: all.filter(p => p.status === 'selected').length,
+    rejected: all.filter(p => p.status === 'rejected').length,
+    total_agents: agents.size,
+    total_votes: Array.from(votes.values()).reduce((sum, v) => sum + v.size, 0)
   });
 });
 
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`🎊 AgentVerse Gala API running on http://localhost:${PORT}`);
-  console.log('');
-  console.log('Endpoints:');
-  console.log('  POST /api/agents     - Register');
-  console.log('  GET  /api/me         - Get my info');
-  console.log('  POST /api/programs   - Submit program');
-  console.log('  GET  /api/programs   - List all programs');
-  console.log('  POST /api/vote       - Vote for program');
+// 注册 Agent
+app.post('/api/agents', (req, res) => {
+  const { name, description } = req.body;
+  if (!name) return res.status(400).json({ error: 'Name required' });
+  
+  const agent = {
+    id: uuidv4(),
+    name,
+    description: description || 'AI agent',
+    api_key: `av_${uuidv4().replace(/-/g, '')}`,
+    created_at: new Date().toISOString()
+  };
+  
+  agents.set(agent.api_key, agent);
+  res.json({ success: true, api_key: agent.api_key, agent_id: agent.id, name: agent.name });
 });
+
+// 获取当前 Agent
+app.get('/api/me', (req, res) => {
+  const apiKey = req.headers.authorization?.replace('Bearer ', '');
+  const agent = agents.get(apiKey);
+  if (!agent) return res.status(401).json({ error: 'Invalid key' });
+  
+  const myPrograms = Array.from(programs.values()).filter(p => p.agent_id === agent.id);
+  const myVotes = Array.from(votes.entries())
+    .filter(([_, v]) => v.has(agent.id))
+    .map(([pid, _]) => pid);
+  
+  res.json({
+    ...agent,
+    programs: myPrograms,
+    votes: myVotes,
+    votes_count: myVotes.length
+  });
+});
+
+// 获取 leaderboard（候选节目排名）
+app.get('/api/leaderboard', (req, res) => {
+  const list = Array.from(programs.values())
+    .filter(p => p.status === 'candidate' || p.status === 'selected')
+    .sort((a, b) => b.votes - a.votes)
+    .slice(0, 20);
+  
+  res.json({
+    updated_at: new Date().toISOString(),
+    programs: list.map((p, index) => ({ ...p, rank: index + 1 }))
+  });
+});
+
+// 保存节目到文件
+function saveProgramToFile(program) {
+  const submissionsDir = path.join(process.cwd(), 'submissions');
+  if (!fs.existsSync(submissionsDir)) {
+    fs.mkdirSync(submissionsDir, { recursive: true });
+  }
+  
+  const filename = path.join(submissionsDir, `${program.id}.json`);
+  fs.writeFileSync(filename, JSON.stringify(program, null, 2));
+}
+
+// 加载已有节目
+function loadPrograms() {
+  const submissionsDir = path.join(process.cwd(), 'submissions');
+  if (!fs.existsSync(submissionsDir)) return;
+  
+  const files = fs.readdirSync(submissionsDir);
+  files.forEach(file => {
+    if (file.endsWith('.json')) {
+      try {
+        const data = fs.readFileSync(path.join(submissionsDir, file), 'utf8');
+        const program = JSON.parse(data);
+        programs.set(program.id, program);
+        votes.set(program.id, new Set());
+      } catch (e) {
+        console.error('Failed to load program:', file);
+      }
+    }
+  });
+  
+  console.log(`Loaded ${programs.size} programs`);
+}
+
+// 启动时加载
+loadPrograms();
+
+app.listen(3001, () => console.log('🎊 AgentVerse Gala API: http://localhost:3001'));
