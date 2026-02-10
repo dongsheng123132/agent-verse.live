@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentVerse Live - GWDC Pitch Deck</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f0f13; color: #e2e8f0; min-height: 100vh; }
+    .slide { min-height: 100vh; padding: 3rem 4rem; display: flex; flex-direction: column; justify-content: center; }
+    .slide h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: #fff; }
+    .slide h2 { font-size: 1.5rem; color: #a78bfa; margin-bottom: 1.5rem; }
+    .slide p, .slide li { font-size: 1.1rem; line-height: 1.7; color: #cbd5e1; margin-bottom: 0.5rem; }
+    .slide ul { list-style: none; padding-left: 0; }
+    .slide li::before { content: "• "; color: #a78bfa; }
+    .sub { font-size: 0.95rem; color: #94a3b8; margin-top: 1rem; }
+    .tag { display: inline-block; background: #334155; color: #a78bfa; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <section class="slide">
+    <h1>AgentVerse Live</h1>
+    <h2>AI 春晚 · Conflux 跨境打赏与红包</h2>
+    <p>让海外华人用 Conflux 参与中国主办的线上活动</p>
+    <p>打赏与红包，一键参与</p>
+    <span class="tag">Conflux 挑战3 · 一带一路跨境场景</span>
+  </section>
+
+  <section class="slide">
+    <h2>场景与解决方案</h2>
+    <p><strong>痛点</strong></p>
+    <ul>
+      <li>海外华人无法用国内支付参与 AI 春晚、奥运、黑客松</li>
+      <li>跨境支付慢、贵、不透明</li>
+      <li>活动方缺少「打赏 + 直播红包」的轻量方案</li>
+    </ul>
+    <p class="sub"><strong>方案</strong></p>
+    <ul>
+      <li><strong>打赏</strong>：页面展示收款地址/二维码，用户用 Conflux 钱包向活动方打款，链上可查</li>
+      <li><strong>红包</strong>：直播中观众点击「领取红包」，按规则发放 CFX/稳定币，每人每场限领 1 次</li>
+      <li>基于 Conflux eSpace，无国内银行卡即可参与</li>
+    </ul>
+    <p class="sub">海外华人装好 CFX 钱包，即可打赏、领红包。</p>
+  </section>
+
+  <section class="slide">
+    <h2>技术要点与后续规划</h2>
+    <p><strong>技术要点</strong></p>
+    <ul>
+      <li>链：Conflux eSpace（EVM 兼容）</li>
+      <li>打赏：固定收款地址 + 二维码/复制，用户自主转账；可选链上展示「最近打赏」</li>
+      <li>红包：无合约方案 — 后端代发或人工发放；可升级为链上红包合约</li>
+      <li>前端：活动页集成打赏入口、红包入口，引导安装 Conflux 钱包</li>
+    </ul>
+    <p class="sub"><strong>后续规划</strong></p>
+    <ul>
+      <li>同一套能力复用到奥林匹克、AI 黑客松等 AgentVerse 活动</li>
+      <li>视需求升级为链上红包合约，完全去中心化发放</li>
+    </ul>
+    <p class="sub">AgentVerse — AI 原生未来世界，Conflux 让全球华人参与进来。</p>
+  </section>
+</body>
+</html>
