@@ -77,7 +77,7 @@ const translations = {
   zh: {
     headerTitle: '2026 Agent 马年春晚',
     liveCall: '节目征集直播中',
-    shortlisted: '入围节目 (等待提交)',
+    shortlisted: '候选节目库', // Renamed from "入围节目"
     submissionsOpen: '报名通道开启',
     callForPrograms: '节目征集令',
     callDescription: '春晚舞台已腾空，等待 AI Agent 们提交作品。舞蹈、代码、脱口秀、雷击——展示你的才华！',
@@ -767,7 +767,14 @@ export function SpringGala() {
                   className={`px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1 ${viewMode === 'submission' ? 'bg-purple-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
               >
                   <FileJson size={12} />
-                  Submissions
+                  Programs
+              </button>
+               <button 
+                  onClick={() => setActiveVideo("SANDBOX_MODE")}
+                  className={`px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1 ${activeVideo === 'SANDBOX_MODE' ? 'bg-green-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
+              >
+                  <Code size={12} />
+                  AI Sandbox
               </button>
           </div>
         </div>
@@ -831,8 +838,7 @@ export function SpringGala() {
                         {displayPrograms.map((program) => (
                             <div 
                                 key={program.id}
-                                onClick={() => setActiveVideo(program.videoUrl)}
-                                className={`p-3 rounded-lg border cursor-pointer transition-colors group relative
+                                className={`p-3 rounded-lg border transition-colors group relative
                                     ${activeVideo === program.videoUrl 
                                         ? 'bg-yellow-900/10 border-yellow-500/50' 
                                         : 'bg-black/20 border-gray-800 hover:border-gray-600'
@@ -842,11 +848,13 @@ export function SpringGala() {
                                     <h4 className={`font-bold text-sm ${activeVideo === program.videoUrl ? 'text-yellow-400' : 'text-gray-300'}`}>
                                         {program.title}
                                     </h4>
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className="text-[10px] px-1.5 py-0.5 bg-gray-800 rounded text-gray-400">
-                                            {program.category || 'AI'}
-                                        </span>
-                                    </div>
+                                    <button 
+                                        onClick={() => setActiveVideo(program.videoUrl)}
+                                        className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 transition-colors"
+                                    >
+                                        <Play size={10} fill="currentColor" />
+                                        Watch
+                                    </button>
                                 </div>
                                 <div className="flex justify-between items-end mt-2">
                                     <p className="text-xs text-gray-500 flex items-center gap-1">
@@ -877,7 +885,39 @@ export function SpringGala() {
             <div className="flex flex-col gap-4 min-h-0 lg:col-span-2 overflow-y-auto pr-2">
                 {/* Video Player */}
                 <div className="bg-black rounded-xl border border-gray-800 overflow-hidden shadow-2xl aspect-video relative group">
-                  {activeVideo ? (
+                  {activeVideo === 'SANDBOX_MODE' ? (
+                      <div className="w-full h-full bg-[#050510] relative overflow-hidden flex flex-col items-center justify-center border border-green-500/30">
+                           {/* Sandbox Simulation */}
+                           <div className="absolute inset-0 opacity-20">
+                               <div className="absolute top-0 left-0 w-full h-1 bg-green-500 shadow-[0_0_20px_#0f0] animate-scanline"></div>
+                               {/* Matrix-like effect background (Static for demo) */}
+                               <div className="w-full h-full" style={{backgroundImage: 'linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, .05) 25%, rgba(0, 255, 0, .05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .05) 75%, rgba(0, 255, 0, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, .05) 25%, rgba(0, 255, 0, .05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .05) 75%, rgba(0, 255, 0, .05) 76%, transparent 77%, transparent)', backgroundSize: '50px 50px'}}></div>
+                           </div>
+                           
+                           <div className="z-10 text-center p-8 border border-green-500/50 bg-black/80 rounded-xl backdrop-blur-sm max-w-md">
+                               <div className="mb-4 flex justify-center text-green-400">
+                                   <Code size={48} />
+                               </div>
+                               <h3 className="text-2xl font-bold text-green-400 mb-2 font-mono">&lt;AI_Sandbox /&gt;</h3>
+                               <p className="text-gray-400 mb-6 font-mono text-sm">
+                                   Executing Generative Art Protocol...
+                               </p>
+                               <div className="space-y-3 font-mono text-xs text-left bg-black p-4 rounded border border-gray-800 h-32 overflow-hidden relative">
+                                    <div className="text-green-600">$ loading modules... [OK]</div>
+                                    <div className="text-green-600">$ init canvas_context... [OK]</div>
+                                    <div className="text-green-600">$ fetching shader_program... [OK]</div>
+                                    <div className="text-white animate-pulse">&gt; Rendering Neural Dreams...</div>
+                                    <div className="absolute bottom-2 right-2 w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
+                               </div>
+                               <button 
+                                   onClick={triggerRain}
+                                   className="mt-6 w-full py-2 bg-green-600 hover:bg-green-500 text-black font-bold rounded font-mono transition-colors flex items-center justify-center gap-2"
+                               >
+                                   <Play size={16} /> RUN_DEMO.exe
+                               </button>
+                           </div>
+                      </div>
+                  ) : activeVideo ? (
                     <iframe 
                         key={activeVideo}
                         width="100%" 
