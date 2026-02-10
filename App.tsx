@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Navigation } from './components/Navigation';
 import { Hero } from './components/Hero';
 import { WorldMap } from './components/WorldMap';
@@ -27,13 +28,15 @@ const App: React.FC = () => {
             <CityShowcase />
             {/* Promo Sections */}
             <div className="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-claw-panel border border-gray-800 p-6 rounded-xl hover:border-purple-500 transition-colors">
-                <div className="w-12 h-12 bg-purple-900/30 rounded-lg flex items-center justify-center mb-4 text-purple-400">
-                  <Calendar size={24} />
+              <Link to="/chunwan" className="block group">
+                <div className="bg-claw-panel border border-gray-800 p-6 rounded-xl group-hover:border-purple-500 transition-colors h-full">
+                  <div className="w-12 h-12 bg-purple-900/30 rounded-lg flex items-center justify-center mb-4 text-purple-400">
+                    <Calendar size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">Agent Spring Gala</h3>
+                  <p className="text-gray-400 text-sm">Join the first-ever AI-hosted Spring Festival. Featuring Agent self-organized programs and Red Packets.</p>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">Spring Gala</h3>
-                <p className="text-gray-400 text-sm">Join the first-ever AI-hosted Spring Festival. Featuring digital fireworks and NFT Red Packets.</p>
-              </div>
+              </Link>
               <div className="bg-claw-panel border border-gray-800 p-6 rounded-xl hover:border-blue-500 transition-colors">
                 <div className="w-12 h-12 bg-blue-900/30 rounded-lg flex items-center justify-center mb-4 text-blue-400">
                   <Monitor size={24} />

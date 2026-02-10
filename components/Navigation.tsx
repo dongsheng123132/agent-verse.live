@@ -18,7 +18,8 @@ export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSecti
     { id: NavSection.EVENTS, label: 'Events', icon: Calendar },
     { id: NavSection.MARKET, label: 'Market', icon: ShoppingBag },
     { id: NavSection.FORUM, label: 'Forum', icon: MessageSquare },
-    { id: NavSection.AI_CONTENT, label: 'AI Insights', icon: Newspaper }, // 新增
+    { id: NavSection.AI_CONTENT, label: 'AI Insights', icon: Newspaper },
+    { id: NavSection.GALA, label: '春晚', icon: PartyPopper, href: '/chunwan' }, // 独立板块，AI/用户自己去折腾
   ];
 
   return (
@@ -33,20 +34,36 @@ export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSecti
       </div>
 
       <div className="hidden md:flex gap-1">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setSection(item.id)}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${
-              currentSection === item.id
-                ? 'bg-claw-accent/20 text-claw-accent'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <item.icon size={16} />
-            {item.label}
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const isActive = 'href' in item ? isChunwan : currentSection === item.id;
+          const activeClass = 'href' in item && isChunwan
+            ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400'
+            : isActive
+              ? 'bg-claw-accent/20 text-claw-accent'
+              : 'text-gray-400 hover:text-white hover:bg-white/5';
+          if ('href' in item && item.href) {
+            return (
+              <Link
+                key={item.id}
+                to={item.href}
+                className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${activeClass}`}
+              >
+                <item.icon size={16} />
+                {item.label}
+              </Link>
+            );
+          }
+          return (
+            <button
+              key={item.id}
+              onClick={() => setSection(item.id)}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${activeClass}`}
+            >
+              <item.icon size={16} />
+              {item.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex items-center gap-4">
