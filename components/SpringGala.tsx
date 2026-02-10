@@ -444,9 +444,12 @@ export function SpringGala() {
   };
 
   // Conflux Contract Integration
-  const loadContractData = async (provider: any) => {
+  const loadContractData = async (ignoredProvider?: any) => {
     try {
-      const { Contract, formatEther, id } = await import('ethers');
+      const { Contract, formatEther, id, JsonRpcProvider } = await import('ethers');
+      // ALWAYS use public provider for reading state to avoid wallet network mismatch errors
+      const provider = new JsonRpcProvider("https://evmtestnet.confluxrpc.com");
+
       const c = new Contract(RED_PACKET_CONTRACT, RED_PACKET_ABI, provider);
       
       let packetCount = BigInt(0);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { NavSection } from '../types';
 import { LayoutGrid, Map, Calendar, ShoppingBag, Wallet, MessageSquare, PartyPopper, Newspaper, BarChart } from 'lucide-react';
 
@@ -8,6 +9,9 @@ interface NavigationProps {
 }
 
 export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSection }) => {
+  const location = useLocation();
+  const isChunwan = location.pathname === '/chunwan';
+
   const navItems = [
     { id: NavSection.HOME, label: 'Dashboard', icon: LayoutGrid },
     { id: NavSection.MAP, label: 'World Map', icon: Map },
@@ -56,20 +60,20 @@ export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSecti
           Connect
         </button>
 
-        <button 
-          onClick={() => setSection(NavSection.GALA)}
+        <Link
+          to="/chunwan"
           className={`p-3 rounded-xl transition-all duration-300 relative group ${
-            currentSection === NavSection.GALA 
-              ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 shadow-[0_0_20px_rgba(248,113,113,0.2)]' 
+            currentSection === NavSection.GALA || isChunwan
+              ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 shadow-[0_0_20px_rgba(248,113,113,0.2)]'
               : 'text-gray-400 hover:text-white hover:bg-white/5'
           }`}
         >
           <PartyPopper size={24} />
           <span className="absolute top-full mt-2 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gray-700 pointer-events-none z-50">
-            Spring Gala
+            春晚 / Spring Gala
           </span>
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-        </button>
+        </Link>
       </div>
     </nav>
   );
