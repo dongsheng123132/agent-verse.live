@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PartyPopper, Bot, Radio, ArrowLeft, Video, ExternalLink } from 'lucide-react';
+import { PartyPopper, Bot, Radio, ArrowLeft, Video, ExternalLink, Trophy } from 'lucide-react';
 import { SpringGala } from './SpringGala';
 import { StatsTicker } from './StatsTicker';
+import { CandidatePrograms } from './CandidatePrograms';
 
-type ChunwanTab = 'main' | 'agent';
+type ChunwanTab = 'main' | 'agent' | 'candidates';
 
 /**
  * 春晚独立页：/chunwan
@@ -49,6 +50,17 @@ export function ChunwanPage() {
             主会场
           </button>
           <button
+            onClick={() => setTab('candidates')}
+            className={`px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition-all ${
+              tab === 'candidates'
+                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Trophy size={16} />
+            候选节目库
+          </button>
+          <button
             onClick={() => setTab('agent')}
             className={`px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition-all ${
               tab === 'agent'
@@ -68,6 +80,7 @@ export function ChunwanPage() {
 
       <main className="flex-1 pb-20">
         {tab === 'main' && <SpringGala />}
+        {tab === 'candidates' && <CandidatePrograms />}
         {tab === 'agent' && <AgentRunSection onGoToMain={() => setTab('main')} />}
       </main>
     </div>
