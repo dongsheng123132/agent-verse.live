@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp, Wallet, Copy, Check, ArrowRight, Code } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp, Wallet, Copy, Check, ArrowRight, Code, Home } from 'lucide-react';
 import { AIBanner } from './AIBanner';
 import { getAPIBaseUrl } from '../services/api';
 import { AIRulesModal } from './AIRulesModal';
@@ -11,11 +12,11 @@ type Language = 'en' | 'zh' | 'tw';
 
 const OFFICIAL_WALLET = "0x408E2fC4FCAF2D38a6C9dcF07C6457bdFb6e0250";
 /** Conflux eSpace 测试网红包合约 — 仅用于 Conflux 链 (Chain ID 71) */
-const RED_PACKET_CONTRACT = "0x8deb52e05B4664DAe9a2f382631436fa1FF501aa";
+const RED_PACKET_CONTRACT = "0xe6EA7c31A85A1f42DFAc6C49155bE90722246890";
 const CONFLUX_ESPACE_TESTNET_CHAIN_ID = 71;
 
 /** Monad 测试网红包合约 — 仅用于 Monad 链 (Chain ID 10143)。与 CFX 地址同字面量时表示两条链各自部署的合约恰好同地址；若你 Monad 部署得到的是别的地址，请改此处。 */
-const RED_PACKET_MONAD_CONTRACT = "0x790Cd567214fAbf7B908f2b1c4805d9657405d8B";
+const RED_PACKET_MONAD_CONTRACT = "0xe6EA7c31A85A1f42DFAc6C49155bE90722246890";
 const MONAD_TESTNET_CHAIN_ID = 10143;
 const MONAD_RPC_URLS = ["https://testnet-rpc.monad.xyz"];
 const MONAD_RPC_URL = MONAD_RPC_URLS[0];
@@ -474,6 +475,7 @@ const CCTV_URL = "https://www.youtube.com/embed/u4LhRxaYHB8?autoplay=1&mute=1";
 const LIVE_VIDEO_2_URL = "https://www.youtube.com/embed/MFo5u9NRPaA?list=PLXQgvG0bchMN_b85d_kK75skZcfNxIDRG&index=3&autoplay=0";
 
 export function SpringGala() {
+  const navigate = useNavigate();
   const [lang, setLang] = useState<Language>('zh');
   const [showQr, setShowQr] = useState(false); // For Tips
   const [activeVideo, setActiveVideo] = useState<string | null>(CCTV_URL);
@@ -541,6 +543,8 @@ export function SpringGala() {
             return;
        }
        const signer = await provider.getSigner();
+       // Double check address matches
+       console.log('Sending Password Red Packet to:', RED_PACKET_MONAD_CONTRACT);
        const contract = new Contract(RED_PACKET_MONAD_CONTRACT, RED_PACKET_ABI, signer);
        // In a real app, we would hash the password and store it on-chain or in a backend.
        // Here we just deposit to the pool and simulate the "creation" of a password packet.
@@ -1466,6 +1470,13 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
       {/* Header */}
       <div className="flex justify-between items-center shrink-0">
         <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate('/')}
+            className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+            title={lang === 'zh' ? '返回首页' : 'Back to Home'}
+          >
+            <Home size={20} />
+          </button>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-yellow-500 bg-clip-text text-transparent">
