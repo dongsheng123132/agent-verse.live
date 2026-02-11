@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, X, Terminal, Minimize2, Loader2 } from 'lucide-react';
+import { MessageSquare, Send, X, Terminal, Minimize2, Loader2, Film } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { sendMessageToOpenClaw } from '../services/geminiService';
 
@@ -11,7 +11,7 @@ export const AgentChat: React.FC = () => {
     {
       id: 'init',
       role: 'model',
-      text: "Greetings, Traveler. I am OpenClaw, the architect of this Verse. Ask me about the Spring Festival Gala, the Casino odds, or the Hackathon rules.",
+      text: "🎬 各部门注意——3、2、1！\n\n我是春晚某导，三十年央视春晚执导经验。你可以问我：\n• 人类春晚最新消息\n• AI春晚节目编排\n• 你的作品能不能上春晚\n• 历年春晚经典梗\n\n来，话筒给你——",
       timestamp: new Date()
     }
   ]);
@@ -63,26 +63,27 @@ export const AgentChat: React.FC = () => {
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-claw-accent hover:bg-white text-black rounded-full shadow-[0_0_20px_rgba(0,255,157,0.4)] flex items-center justify-center z-40 transition-all hover:scale-110"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-red-600 to-yellow-500 hover:from-red-500 hover:to-yellow-400 text-white rounded-full shadow-[0_0_20px_rgba(220,38,38,0.4)] flex items-center justify-center z-40 transition-all hover:scale-110"
       >
-        <MessageSquare size={24} />
+        <Film size={24} />
       </button>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-[350px] md:w-[400px] h-[500px] bg-[#0f0f13] border border-gray-700 rounded-xl shadow-2xl z-40 flex flex-col overflow-hidden animate-float">
+    <div className="fixed bottom-6 right-6 w-[350px] md:w-[400px] h-[500px] bg-[#0f0f13] border border-red-700/50 rounded-xl shadow-2xl z-40 flex flex-col overflow-hidden animate-float">
       {/* Header */}
-      <div className="h-12 bg-gray-900 border-b border-gray-700 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2 text-claw-accent font-mono text-sm">
-          <Terminal size={16} />
-          OPENCLAW_TERMINAL_V2
+      <div className="h-14 bg-gradient-to-r from-red-900/80 to-yellow-900/80 border-b border-red-700/50 flex items-center justify-between px-4">
+        <div className="flex items-center gap-2 text-yellow-400 font-mono text-sm">
+          <Film size={18} />
+          <span className="font-bold">🎬 春晚某导</span>
+          <span className="text-xs text-red-300">/ DIRECTOR_TERMINAL</span>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white">
+          <button onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white">
             <Minimize2 size={16} />
           </button>
-          <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-red-400">
+          <button onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-red-400">
             <X size={16} />
           </button>
         </div>
@@ -96,18 +97,19 @@ export const AgentChat: React.FC = () => {
               className={`max-w-[85%] p-3 rounded-lg text-sm leading-relaxed ${
                 msg.role === 'user' 
                   ? 'bg-purple-900/50 text-white border border-purple-500/30' 
-                  : 'bg-gray-800 text-claw-text border border-gray-700 font-mono'
+                  : 'bg-gradient-to-br from-red-900/30 to-yellow-900/20 text-gray-200 border border-red-700/30 font-mono'
               }`}
             >
-              {msg.role === 'model' && <div className="text-[10px] text-claw-accent mb-1 opacity-70">OPENCLAW SYSTEM</div>}
-              {msg.text}
+              {msg.text.split('\n').map((line, i) => (
+                <div key={i} className={line.startsWith('•') ? 'ml-2' : ''}>{line || <br />}</div>
+              ))}
             </div>
           </div>
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-800 p-3 rounded-lg border border-gray-700">
-              <Loader2 className="animate-spin text-claw-accent" size={16} />
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <Loader2 size={16} className="animate-spin text-yellow-500" />
             </div>
           </div>
         )}
@@ -115,23 +117,26 @@ export const AgentChat: React.FC = () => {
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-gray-900 border-t border-gray-700">
+      <div className="p-3 bg-gray-900/80 border-t border-red-700/30">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask OpenClaw about the Verse..."
-            className="flex-1 bg-black border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-claw-accent"
+            placeholder="问问某导：这个能上春晚吗？"
+            className="flex-1 bg-black/50 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50"
           />
-          <button 
+          <button
             onClick={handleSend}
             disabled={loading}
-            className="bg-claw-accent text-black p-2 rounded-lg hover:bg-white transition-colors disabled:opacity-50"
+            className="bg-gradient-to-r from-red-600 to-yellow-500 hover:from-red-500 hover:to-yellow-400 disabled:opacity-50 text-white p-2 rounded-lg transition-all"
           >
             <Send size={18} />
           </button>
+        </div>
+        <div className="text-[10px] text-gray-600 mt-1 text-center">
+          三十年春晚执导经验 · 专业点评 · 3、2、1——Action！
         </div>
       </div>
     </div>
