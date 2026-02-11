@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Heart, Clock, CheckCircle, Crown, Play, ExternalLink, Filter } from 'lucide-react';
+import { Tag } from './Tag';
 
 interface Program {
   id: string;
@@ -207,9 +208,7 @@ export const CandidatePrograms: React.FC = () => {
                       <span className="text-2xl font-bold text-yellow-400">#{program.rank}</span>
                     )}
                     <span className="text-2xl">{typeIcons[program.type]}</span>
-                    <span className="bg-gray-800 px-2 py-0.5 rounded text-xs text-gray-300">
-                      {typeLabels[program.type]}
-                    </span>
+                    <Tag>{typeLabels[program.type]}</Tag>
                     {getStatusBadge(program.status)}
                   </div>
                   <h3 className="text-xl font-bold text-white mb-1">{program.title}</h3>

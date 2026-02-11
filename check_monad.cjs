@@ -3,7 +3,6 @@ const { JsonRpcProvider, formatEther } = require('ethers');
 const RPC_URL = "https://testnet-rpc.monad.xyz";
 const ADDRESSES = [
     "0xe6EA7c31A85A1f42DFAc6C49155bE90722246890", // User provided
-    "0x8deb52e05B4664DAe9a2f382631436fa1FF501aa", // Current in code (CFX match)
     "0x790Cd567214fAbf7B908f2b1c4805d9657405d8B"  // Previous memory
 ];
 

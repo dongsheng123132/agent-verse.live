@@ -1,23 +1,29 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PartyPopper, Bot, Radio, ArrowLeft, Video, ExternalLink, Trophy, ThumbsUp, MessageSquare, TrendingUp, Sparkles, CheckCircle2 } from 'lucide-react';
+import { PartyPopper, Bot, Radio, ArrowLeft, Video, ExternalLink, Trophy, ThumbsUp, MessageSquare, TrendingUp, Sparkles, CheckCircle2, Coins, Target, Globe } from 'lucide-react';
 import { SpringGala } from './SpringGala';
 import { StatsTicker } from './StatsTicker';
 import { CandidatePrograms } from './CandidatePrograms';
+import { Tag } from './Tag';
 
 type ChunwanTab = 'main' | 'agent' | 'candidates';
+export type ChunwanLanguage = 'en' | 'zh' | 'tw';
 
 /**
  * 春晚独立页：/chunwan
  * - 主会场：现有 SpringGala（直播、打赏、红包、节目征集）
  * - Agent 自办节目：由 AI Agent 自主策划/主持的节目板块
+ * - 顶栏语言/字体切换为全局设置
  */
 export function ChunwanPage() {
-  const [tab, setTab] = useState<ChunwanTab>('main'); // Default to Main Venue (Live) based on user request
+  const [tab, setTab] = useState<ChunwanTab>('main');
+  const [lang, setLang] = useState<ChunwanLanguage>('zh');
+
+  const cycleLang = () => setLang(l => (l === 'en' ? 'zh' : l === 'zh' ? 'tw' : 'en'));
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0f0f13] text-gray-200 font-sans">
-      {/* Top bar: logo + 返回首页 + 板块切换 */}
+      {/* Top bar: logo + 返回首页 + 板块切换 + 语言（总设置） */}
       <header className="fixed top-0 left-0 right-0 h-16 glass-panel border-b border-gray-800 z-50 flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
           <Link
@@ -71,6 +77,38 @@ export function ChunwanPage() {
             <Bot size={16} />
             Agent 自办节目
           </button>
+          <Link
+            to="/points"
+            className="px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white border border-transparent hover:border-amber-500/30"
+          >
+            <Coins size={16} />
+            积分
+          </Link>
+          <Link
+            to="/predictions"
+            className="px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white border border-transparent hover:border-red-500/30"
+          >
+            <Target size={16} />
+            预测
+          </Link>
+          <Link
+            to="/map"
+            className="px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white border border-transparent hover:border-cyan-500/30"
+          >
+            <Globe size={16} />
+            福气地图
+          </Link>
+          {/* 语言/字体切换：总设置，放在顶栏 */}
+          <button
+            type="button"
+            onClick={cycleLang}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+              lang === 'zh' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-white/5 text-gray-400 border-gray-600 hover:text-white'
+            }`}
+            title={lang === 'en' ? 'Switch to 中文' : lang === 'zh' ? '切換繁體' : 'Switch to English'}
+          >
+            {lang === 'en' ? '中文' : lang === 'zh' ? '繁體' : 'EN'}
+          </button>
         </div>
       </header>
 
@@ -79,7 +117,7 @@ export function ChunwanPage() {
       <StatsTicker />
 
       <main className="flex-1 pb-20">
-        {tab === 'main' && <SpringGala />}
+        {tab === 'main' && <SpringGala lang={lang} setLang={setLang} />}
         {tab === 'candidates' && <CandidatePrograms />}
         {tab === 'agent' && <AgentRunSection onGoToMain={() => setTab('main')} />}
       </main>
@@ -200,9 +238,7 @@ function AgentRunSection({ onGoToMain }: { onGoToMain: () => void }) {
                 <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-800/50">
                   <div className="flex gap-2">
                     {item.tags.map(tag => (
-                      <span key={tag} className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">
-                        {tag}
-                      </span>
+                      <Tag key={tag}>{tag}</Tag>
                     ))}
                   </div>
                   <div className="flex items-center gap-3 text-sm">

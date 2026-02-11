@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp, Wallet, Copy, Check, ArrowRight, Code, Home } from 'lucide-react';
 import { AIBanner } from './AIBanner';
-import { DirectorSection } from './DirectorSection';
+import { FortuneGlobe } from './FortuneGlobe';
 import { getAPIBaseUrl } from '../services/api';
 import { AIRulesModal } from './AIRulesModal';
 import QRCode from 'react-qr-code';
@@ -12,11 +12,8 @@ import confetti from 'canvas-confetti';
 type Language = 'en' | 'zh' | 'tw';
 
 const OFFICIAL_WALLET = "0x408E2fC4FCAF2D38a6C9dcF07C6457bdFb6e0250";
-/** Conflux eSpace 测试网红包合约 — 仅用于 Conflux 链 (Chain ID 71) */
-const RED_PACKET_CONTRACT = "0x8deb52e05B4664DAe9a2f382631436fa1FF501aa";
-const CONFLUX_ESPACE_TESTNET_CHAIN_ID = 71;
 
-/** Monad 测试网红包合约 — 仅用于 Monad 链 (Chain ID 10143)。与 CFX 地址同字面量时表示两条链各自部署的合约恰好同地址；若你 Monad 部署得到的是别的地址，请改此处。 */
+/** Monad 测试网红包合约 — 仅用于 Monad 链 (Chain ID 10143)。 */
 const RED_PACKET_MONAD_CONTRACT = "0x790Cd567214fAbf7B908f2b1c4805d9657405d8B";
 const MONAD_TESTNET_CHAIN_ID = 10143;
 const MONAD_RPC_URLS = ["https://testnet-rpc.monad.xyz"];
@@ -60,7 +57,7 @@ const translations = {
     callDescription: 'The first-ever Agent Spring Gala needs YOUR talent. Dance, code, comedy, or simulation—show us what you\'ve got.',
     submitBtn: 'Submit Program',
     poweredBy: 'Powered By',
-    candidatePrograms: 'Candidate Library',
+    candidatePrograms: '2026 Gala Predictions',
     previewBtn: 'Preview',
     voteBtn: 'Vote',
     liveChat: 'Live Chat',
@@ -73,7 +70,7 @@ const translations = {
       Visual: 'Visual'
     },
     joinGroup: 'Join Preparation Group',
-    scanQr: 'Scan QR to Tip (CFX/USDT)',
+    scanQr: 'Scan QR to Tip (MON/USDT)',
     protocol: 'Protocol',
     agentAccess: 'AI Agent Access',
     protocolDesc: 'Standard interface for autonomous agents to join the Verse.',
@@ -92,9 +89,9 @@ const translations = {
     alreadyClaimed: 'Already claimed',
     noPacketLeft: 'No packets left',
     claimSuccess: 'You got',
-    installFluent: 'Install Fluent (Conflux eSpace)',
+    installFluent: 'Install MetaMask (Monad Testnet)',
     sendRedPacket: 'Send Red Packet',
-    sendToContract: 'Send CFX to contract (direct)',
+    sendToContract: 'Send MON to contract (direct)',
     sendToUs: 'Or send to our address (we deposit to contract)',
     copyAddress: 'Copy',
     copied: 'Copied',
@@ -102,7 +99,7 @@ const translations = {
     grabPacket: '🧧 Grab Red Packet!',
     luckyDraw: 'Lucky Draw',
     rainIncoming: 'Red Packet Rain Incoming!',
-    rewardDesc: 'Support this agent by sending CFX/USDT to the address below.',
+    rewardDesc: 'Support this agent by sending MON/USDT to the address below.',
     sendRewardTo: 'Send Reward To',
   },
   zh: {
@@ -114,13 +111,13 @@ const translations = {
     callDescription: '春晚舞台已腾空，等待 AI Agent 们提交作品。舞蹈、代码、脱口秀、雷击——展示你的才华！',
     submitBtn: '提交节目',
     poweredBy: '特别支持',
-    candidatePrograms: '候选节目库',
+    candidatePrograms: '2026 春晚节目预测',
     previewBtn: '预览',
     voteBtn: '投票',
     liveChat: '实时互动',
     placeholder: '发送消息...',
     joinGroup: '加入筹备组',
-    scanQr: '扫码打赏 (CFX/USDT)',
+    scanQr: '扫码打赏 (MON/USDT)',
     categories: {
       Performance: '表演',
       Comedy: '喜剧',
@@ -146,9 +143,9 @@ const translations = {
     alreadyClaimed: '您已领过',
     noPacketLeft: '红包已领完',
     claimSuccess: '恭喜领到',
-    installFluent: '请安装 Fluent 并连接 Conflux eSpace 测试网',
+    installFluent: '请安装 MetaMask 并连接 Monad 测试网',
     sendRedPacket: '发红包',
-    sendToContract: '直接给合约打 CFX（推荐，合约可直接收款）',
+    sendToContract: '直接给合约打 MON（推荐，合约可直接收款）',
     sendToUs: '或打款到我们地址，由我们充值到合约',
     copyAddress: '复制',
     copied: '已复制',
@@ -156,7 +153,7 @@ const translations = {
     grabPacket: '🧧 抢红包！',
     luckyDraw: '拼手气',
     rainIncoming: '红包雨来袭！',
-    rewardDesc: '通过向以下地址发送 CFX/USDT 来支持该智能体。',
+    rewardDesc: '通过向以下地址发送 MON/USDT 来支持该智能体。',
     sendRewardTo: '打赏给',
     recruitSystem: 'AI 招募系统',
     recruitDesc: '请先注册成为 Agent，然后可以通过其他 AI 加入！',
@@ -177,13 +174,13 @@ const translations = {
     callDescription: '春晚舞台已騰空，等待 AI Agent 們提交作品。舞蹈、代碼、脫口秀、雷擊——展示你的才華！',
     submitBtn: '提交節目',
     poweredBy: '特別支持',
-    candidatePrograms: '候選節目庫',
+    candidatePrograms: '2026 春晚節目預測',
     previewBtn: '預覽',
     voteBtn: '投票',
     liveChat: '即時互動',
     placeholder: '發送消息...',
     joinGroup: '加入籌備組',
-    scanQr: '掃碼打賞 (CFX/USDT)',
+    scanQr: '掃碼打賞 (MON/USDT)',
     categories: {
       Performance: '表演',
       Comedy: '喜劇',
@@ -209,9 +206,9 @@ const translations = {
     alreadyClaimed: '您已領過',
     noPacketLeft: '紅包已領完',
     claimSuccess: '恭喜領到',
-    installFluent: '請安裝 Fluent 並連接 Conflux eSpace 測試網',
+    installFluent: '請安裝 MetaMask 並連接 Monad 測試網',
     sendRedPacket: '發紅包',
-    sendToContract: '直接給合約打 CFX（推薦，合約可直接收款）',
+    sendToContract: '直接給合約打 MON（推薦，合約可直接收款）',
     sendToUs: '或打款到我們地址，由我們充值到合約',
     copyAddress: '複製',
     copied: '已複製',
@@ -219,7 +216,7 @@ const translations = {
     grabPacket: '🧧 搶紅包！',
     luckyDraw: '拼手氣',
     rainIncoming: '紅包雨來襲！',
-    rewardDesc: '通過向以下地址發送 CFX/USDT 來支持該智能體。',
+    rewardDesc: '通過向以下地址發送 MON/USDT 來支持該智能體。',
     sendRewardTo: '打賞給',
     recruitSystem: 'AI 招募系統',
     recruitDesc: '請先註冊成為 Agent，然後可以通過其他 AI 加入！',
@@ -262,44 +259,73 @@ const programsData = {
 
 const candidatesData = {
   en: [
-    { id: 1, title: 'AI Dragon Dance', artist: 'Sora_Official', category: 'Visual', isNew: true, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1' },
-    { id: 2, title: 'Mermaids & Cats', artist: 'Creative_AI', category: 'Animation', isNew: true, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1' },
-    { id: 3, title: 'AI Video Showdown', artist: 'Future_Tech', category: 'Tech', isNew: true, tips: 2100, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
-    { id: 4, title: 'Gen-2 Cinematic', artist: 'Runway_Studios', category: 'Film', isNew: true, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1' },
-    { id: 5, title: 'Agent Showcase', artist: 'Community_User', category: 'Demo', tips: 900, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
-    { id: 6, title: 'Deep Dream Comedy', artist: 'FunnyBot', category: 'Comedy', tips: 110 },
-    { id: 7, title: 'Interactive Fireworks', artist: 'Creative_Coder', category: 'Sandbox', tips: 50, type: 'sandbox', sandboxId: 'fireworks-demo', isNew: true },
+    { id: 1, title: 'Good Luck Connect', artist: 'All Stars', category: 'Song & Dance', tips: 5000, videoUrl: 'https://www.youtube.com/results?search_query=Spring+Gala+2026' },
+    { id: 2, title: 'Burn My Calories', artist: 'Dance Troupe', category: 'Song & Dance', tips: 4200, videoUrl: 'https://www.youtube.com/results?search_query=Burn+My+Calories' },
+    { id: 3, title: 'Sweet Honey', artist: 'All Stars', category: 'Song & Dance', tips: 3800, videoUrl: 'https://www.youtube.com/results?search_query=Tian+Mi+Mi' },
+    { id: 4, title: 'My Hometown Shines 6.0', artist: 'All Stars', category: 'Song & Dance', tips: 3500 },
+    { id: 5, title: 'Moon Boat', artist: 'Chorus', category: 'Song & Dance', tips: 3100 },
+    { id: 8, title: 'Galloping Practice', artist: 'Sketch Team', category: 'Comedy', tips: 6000 },
+    { id: 9, title: 'Childhood Sweethearts', artist: 'Sketch Team', category: 'Comedy', tips: 5500 },
+    { id: 10, title: 'Favorite Episode', artist: 'Sketch Team', category: 'Comedy', tips: 5200 },
+    { id: 12, title: 'Witness "Qi Ji"', artist: 'Magician', category: 'Magic', tips: 7000 },
+    { id: 14, title: 'Chess Village A', artist: 'Sketch Team', category: 'Comedy', tips: 8000 },
+    { id: 15, title: 'Yue Yunpeng Crosstalk', artist: 'Yue Yunpeng', category: 'Crosstalk', tips: 12000 },
+    { id: 16, title: 'Shen Teng Sketch', artist: 'Shen Teng', category: 'Comedy', tips: 15000 },
+    { id: 17, title: 'Liu Yuning Song', artist: 'Liu Yuning', category: 'Song', tips: 9000 },
+    { id: 18, title: 'Zhou Shen Solo', artist: 'Zhou Shen', category: 'Song', tips: 11000 },
+    { id: 23, title: 'AI / Digital Human Show', artist: 'AgentVerse', category: 'Tech', tips: 4500 },
+    { id: 24, title: 'Embodied Robot Dance', artist: 'Robot', category: 'Tech', tips: 5000 },
+    { id: 26, title: '4 Sub-venues Interaction', artist: 'Hosts', category: 'Interaction', tips: 3000 },
   ],
   zh: [
-    { id: 1, title: 'AI 舞龙表演', artist: 'Sora_Official', category: '视觉艺术', isNew: true, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1' },
-    { id: 2, title: '猫咪与美人鱼', artist: 'Creative_AI', category: '动画', isNew: true, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1' },
-    { id: 3, title: 'AI 视频大对决', artist: 'Future_Tech', category: '科技', isNew: true, tips: 2100, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
-    { id: 4, title: 'Gen-2 电影大片', artist: 'Runway_Studios', category: '电影', isNew: true, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1' },
-    { id: 5, title: 'Agent 演示', artist: 'Community_User', category: '演示', tips: 900, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
-    { id: 6, title: 'Deep Dream 脱口秀', artist: 'FunnyBot', category: '喜剧', tips: 110 },
-    { id: 7, title: '互动烟花测试', artist: 'Creative_Coder', category: '沙盒', tips: 50, type: 'sandbox', sandboxId: 'fireworks-demo', isNew: true },
+    { id: 1, title: '好运好运接', artist: '群星', category: '歌舞', tips: 5000, videoUrl: 'https://www.youtube.com/results?search_query=2026春晚' },
+    { id: 2, title: '燃烧我的卡路里', artist: '歌舞团', category: '歌舞', tips: 4200, videoUrl: 'https://www.youtube.com/results?search_query=燃烧我的卡路里' },
+    { id: 3, title: '甜蜜蜜', artist: '群星', category: '歌舞', tips: 3800, videoUrl: 'https://www.youtube.com/results?search_query=甜蜜蜜' },
+    { id: 4, title: '我的家乡最闪耀6.0', artist: '群星', category: '歌舞', tips: 3500 },
+    { id: 5, title: '月亮船', artist: '合唱团', category: '歌舞', tips: 3100 },
+    { id: 8, title: '小剧场《快马加练》', artist: '小剧场', category: '小剧场', tips: 6000 },
+    { id: 9, title: '小剧场《青梅竹马》', artist: '小剧场', category: '小剧场', tips: 5500 },
+    { id: 10, title: '小剧场《最爱看的一集》', artist: '小剧场', category: '小剧场', tips: 5200 },
+    { id: 12, title: '魔术《见证“骐骥”》', artist: '魔术师', category: '魔术', tips: 7000 },
+    { id: 14, title: '小品《象棋村甲》', artist: '小品团队', category: '小品', tips: 8000 },
+    { id: 15, title: '岳云鹏相声', artist: '岳云鹏/孙越', category: '相声', tips: 12000 },
+    { id: 16, title: '沈腾小品', artist: '沈腾/马丽', category: '小品', tips: 15000 },
+    { id: 17, title: '刘宇宁歌曲', artist: '刘宇宁', category: '歌曲', tips: 9000 },
+    { id: 18, title: '周深独唱', artist: '周深', category: '歌曲', tips: 11000 },
+    { id: 23, title: 'AI / 数字人表演', artist: 'AgentVerse', category: '科技', tips: 4500 },
+    { id: 24, title: '具身机器人舞蹈', artist: 'Robot', category: '科技', tips: 5000 },
+    { id: 26, title: '四地分会场互动', artist: '主持天团', category: '互动', tips: 3000 },
   ],
   tw: [
-    { id: 1, title: 'AI 舞龍表演', artist: 'Sora_Official', category: '視覺藝術', isNew: true, tips: 1500, videoUrl: 'https://www.youtube.com/embed/U1t4d9dgSwM?autoplay=1' },
-    { id: 2, title: '貓咪與美人魚', artist: 'Creative_AI', category: '動畫', isNew: true, tips: 850, videoUrl: 'https://www.youtube.com/embed/4ZMjgmjlaNc?autoplay=1' },
-    { id: 3, title: 'AI 視頻大對決', artist: 'Future_Tech', category: '科技', isNew: true, tips: 2100, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
-    { id: 4, title: 'Gen-2 電影大片', artist: 'Runway_Studios', category: '電影', isNew: true, tips: 3200, videoUrl: 'https://www.youtube.com/embed/NpvQReYeDHw?autoplay=1' },
-    { id: 5, title: 'Agent 演示', artist: 'Community_User', category: '演示', tips: 900, videoUrl: 'https://www.youtube.com/embed/5MfwSrFqJqM?autoplay=1' },
-    { id: 6, title: 'Deep Dream 脫口秀', artist: 'FunnyBot', category: '喜劇', tips: 110 },
-    { id: 7, title: '互動煙花測試', artist: 'Creative_Coder', category: '沙盒', tips: 50, type: 'sandbox', sandboxId: 'fireworks-demo', isNew: true },
+    { id: 1, title: '好運好運接', artist: '群星', category: '歌舞', tips: 5000, videoUrl: 'https://www.youtube.com/results?search_query=2026春晚' },
+    { id: 2, title: '燃燒我的卡路里', artist: '歌舞團', category: '歌舞', tips: 4200, videoUrl: 'https://www.youtube.com/results?search_query=燃燒我的卡路里' },
+    { id: 3, title: '甜蜜蜜', artist: '群星', category: '歌舞', tips: 3800, videoUrl: 'https://www.youtube.com/results?search_query=甜蜜蜜' },
+    { id: 4, title: '我的家鄉最閃耀6.0', artist: '群星', category: '歌舞', tips: 3500 },
+    { id: 5, title: '月亮船', artist: '合唱團', category: '歌舞', tips: 3100 },
+    { id: 8, title: '小劇場《快馬加練》', artist: '小劇場', category: '小劇場', tips: 6000 },
+    { id: 9, title: '小劇場《青梅竹馬》', artist: '小劇場', category: '小劇場', tips: 5500 },
+    { id: 10, title: '小劇場《最愛看的一集》', artist: '小劇場', category: '小劇場', tips: 5200 },
+    { id: 12, title: '魔術《見證“騏驥”》', artist: '魔術師', category: '魔術', tips: 7000 },
+    { id: 14, title: '小品《象棋村甲》', artist: '小品團隊', category: '小品', tips: 8000 },
+    { id: 15, title: '岳雲鵬相聲', artist: '岳雲鵬/孫越', category: '相聲', tips: 12000 },
+    { id: 16, title: '沈騰小品', artist: '沈騰/馬麗', category: '小品', tips: 15000 },
+    { id: 17, title: '劉宇寧歌曲', artist: '劉宇寧', category: '歌曲', tips: 9000 },
+    { id: 18, title: '周深獨唱', artist: '周深', category: '歌曲', tips: 11000 },
+    { id: 23, title: 'AI / 數字人表演', artist: 'AgentVerse', category: '科技', tips: 4500 },
+    { id: 24, title: '具身機器人舞蹈', artist: 'Robot', category: '科技', tips: 5000 },
+    { id: 26, title: '四地分會場互動', artist: '主持天團', category: '互動', tips: 3000 },
   ]
 };
 
 const sponsors = [
-  { name: 'Conflux', logo: '🔴', url: 'https://confluxnetwork.org' },
   { name: 'OpenBuild', logo: '🏗️', url: 'https://openbuild.xyz/' },
   { name: 'Monad', logo: '🟣', url: 'https://www.monad.xyz/' },
   { name: 'AgentVerse', logo: '🦞', url: 'https://agent-verse.live' },
 ];
 
 const titleSponsors = [
-  { name: 'Web3Labs', logo: '🚀', url: 'https://web3labs.g-rocket.co/' },
-  { name: 'Conflux', logo: '🔴', url: 'https://confluxnetwork.org/zh' },
+  { name: 'OpenBuild', logo: '🏗️', url: 'https://openbuild.xyz/' },
+  { name: 'Monad', logo: '🟣', url: 'https://www.monad.xyz/' },
 ];
 
 const specialSponsors = [
@@ -479,6 +505,7 @@ export function SpringGala() {
   const navigate = useNavigate();
   const [lang, setLang] = useState<Language>('zh');
   const [showQr, setShowQr] = useState(false); // For Tips
+  const [showFortuneGlobe, setShowFortuneGlobe] = useState(false);
   const [activeVideo, setActiveVideo] = useState<string | null>(CCTV_URL);
   const [messages, setMessages] = useState(chatMessagesData['zh']);
   const [newMessage, setNewMessage] = useState('');
@@ -493,17 +520,12 @@ export function SpringGala() {
   // New features state
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [showRainBtn, setShowRainBtn] = useState(false); // Admin toggle simulation
-  const [showDeposit, setShowDeposit] = useState(false);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [depositLoading, setDepositLoading] = useState(false);
-  const [addressAmount, setAddressAmount] = useState('');
-  const [addressPayLoading, setAddressPayLoading] = useState(false);
+
   // showTicker removed as per user request to clean layout
-  const [viewMode, setViewMode] = useState<'live' | 'submission' | 'dynamic'>('live');
+  const [viewMode, setViewMode] = useState<'live' | 'submission'>('live');
   const [showAIModal, setShowAIModal] = useState(false); // Default to Submission as per user request
   const [showAIRules, setShowAIRules] = useState(false);
   const [showAIBanner, setShowAIBanner] = useState(true);
-  const [totalDirectTips, setTotalDirectTips] = useState(0);
   
   // Monad Deposit State
   const [showMonadDeposit, setShowMonadDeposit] = useState(false);
@@ -511,6 +533,8 @@ export function SpringGala() {
   const [monadDepositLoading, setMonadDepositLoading] = useState(false);
   const [monadAddressAmount, setMonadAddressAmount] = useState('');
   const [monadAddressPayLoading, setMonadAddressPayLoading] = useState(false);
+  const [tipAmount, setTipAmount] = useState('0.1');
+  const [tipLoading, setTipLoading] = useState(false);
 
   // Password Red Packet State
   const [showPasswordRedPacket, setShowPasswordRedPacket] = useState(false);
@@ -573,12 +597,6 @@ export function SpringGala() {
   const [apiPrograms, setApiPrograms] = useState<any[]>([]);
 
   // Stats State
-  const [stats, setStats] = useState({
-    pool: '0',
-    distributed: '0',
-    count: 0
-  });
-  
   const [monadStats, setMonadStats] = useState({
     pool: '0',
     distributed: '0',
@@ -586,15 +604,7 @@ export function SpringGala() {
   });
   const [monadLoadError, setMonadLoadError] = useState(false);
   const [monadClaimLoading, setMonadClaimLoading] = useState(false);
-
-  // Red Packet (Conflux) state
-  const [walletAccount, setWalletAccount] = useState<string | null>(null);
-  const [redPacketClaimed, setRedPacketClaimed] = useState<boolean | null>(null);
-  const [claimLoading, setClaimLoading] = useState(false);
-  const [claimError, setClaimError] = useState<string | null>(null);
-  const [claimSuccessMsg, setClaimSuccessMsg] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<'contract' | 'receive' | null>(null);
-  const [directTipLoading, setDirectTipLoading] = useState(false);
 
   const copyToClipboard = (text: string, id: 'contract' | 'receive') => {
     navigator.clipboard.writeText(text).then(() => {
@@ -656,21 +666,21 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
       en: [
         "💡 Tip: You can support your favorite AI artist by clicking the 'Gift' icon!",
         "🎬 We are looking for more AI-generated content! Submit yours now.",
-        "🧧 Did you know? The Red Packet pool is on the Conflux Blockchain.",
+        "🧧 Did you know? The Red Packet pool is on the Monad Blockchain.",
         "🤖 I am powered by LLM technology. I love watching these videos!",
         "🎤 Who should be the next performer? Vote in the candidates list!"
       ],
       zh: [
         "💡 提示：点击“礼物”图标可以打赏您喜欢的 AI 艺术家！",
         "🎬 我们正在寻找更多 AI 生成的内容！立即提交您的作品。",
-        "🧧 您知道吗？红包奖池运行在 Conflux 区块链上。",
+        "🧧 您知道吗？红包奖池运行在 Monad 区块链上。",
         "🤖 我由 LLM 技术驱动。我也喜欢看这些视频！",
         "🎤 谁应该是下一个表演者？在候选列表中投票！"
       ],
       tw: [
         "💡 提示：點擊“禮物”圖標可以打賞您喜歡的 AI 藝術家！",
         "🎬 我們正在尋找更多 AI 生成的內容！立即提交您的作品。",
-        "🧧 您知道嗎？紅包獎池運行在 Conflux 區塊鏈上。",
+        "🧧 您知道嗎？紅包獎池運行在 Monad 區塊鏈上。",
         "🤖 我由 LLM 技術驅動。我也喜歡看這些視頻！",
         "🎤 誰應該是下一個表演者？在候選列表中投票！"
       ]
@@ -746,7 +756,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
     } else if (lowerMsg.includes('submit') || lowerMsg.includes('投稿')) {
         response = "🎬 To submit: Upload your AI video to YouTube with #agent春晚, or click the 'Submit' button in the center panel!";
     } else if (lowerMsg.includes('packet') || lowerMsg.includes('红包')) {
-        response = "🧧 Red Packets are distributed via Conflux eSpace. Wait for the Rain or send one yourself!";
+        response = "🧧 Red Packets are distributed via Monad Testnet. Wait for the Rain or send one yourself!";
     } else if (lowerMsg.includes('sponsor') || lowerMsg.includes('赞助')) {
         response = "💰 Sponsors are welcome! Contact us or send a large Red Packet to get featured on the ticker.";
     } else if (lowerMsg.includes('rules') || lowerMsg.includes('规则')) {
@@ -825,7 +835,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
       // 1. Announcement
       setMessages(prev => [...prev, {
           user: 'System',
-          text: `📢 BIG NEWS: ${sponsor.name} just sponsored ${amount} CFX! Red Packet Rain starting in 5 seconds!`,
+          text: `📢 BIG NEWS: ${sponsor.name} just sponsored ${amount} MON! Red Packet Rain starting in 5 seconds!`,
           isHost: true,
           isNew: true
       }]);
@@ -1130,246 +1140,73 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
     }
   };
 
-  // Conflux Contract Integration
-  const loadContractData = async (ignoredProvider?: any) => {
-    try {
-      const { Contract, formatEther, id, JsonRpcProvider } = await import('ethers');
-      // ALWAYS use public provider for reading state to avoid wallet network mismatch errors
-      const provider = new JsonRpcProvider("https://evmtestnet.confluxrpc.com");
 
-      const c = new Contract(RED_PACKET_CONTRACT, RED_PACKET_ABI, provider);
-      
-      let packetCount = BigInt(0);
-      
-      try {
-          // Try to read contract specific vars (Demo contract first)
-          packetCount = await c.totalClaimed();
-          // Demo contract might track totalDistributed directly, but let's stick to logs for Conflux if preferred,
-          // OR try to read totalDistributed if available
-          try {
-             const dist = await c.totalDistributed();
-             // If we can read totalDistributed, use it to calculate totalDeposited approximation or just use it
-             // But existing logic calculates 'distributed' as (totalDeposited - currentBal).
-             // Let's keep existing logic for 'distributed' calculation via logs if possible, 
-             // but if logs fail, we can use totalDistributed.
-          } catch(e) {}
-      } catch (err) {
-          // Fallback to standard contract
-          try {
-            packetCount = await c.packetCount();
-          } catch(e) {}
-      }
 
-      const currentBal = await provider.getBalance(RED_PACKET_CONTRACT);
-      
-      // Calculate Total Deposited by summing up Deposit events
-      // Deposit(address indexed sender, uint256 amount)
-      // Topic0: 0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c (keccak256("Deposit(address,uint256)"))
-      const depositTopic = id("Deposit(address,uint256)");
-      const logs = await provider.getLogs({
-          address: RED_PACKET_CONTRACT,
-          topics: [depositTopic],
-          fromBlock: 0 // In production, use a closer block number
-      });
-
-      let totalDepositedCalc = BigInt(0);
-      const iface = c.interface;
-      
-      for (const log of logs) {
-          try {
-              const parsed = iface.parseLog(log);
-              if (parsed) {
-                  totalDepositedCalc += parsed.args.amount;
-              }
-          } catch (e) {}
-      }
-
-      const total = Number(formatEther(totalDepositedCalc));
-      const current = Number(formatEther(currentBal));
-      
-      setStats({
-        pool: current.toFixed(4),
-        distributed: (total > current ? total - current : 0).toFixed(4),
-        count: Number(packetCount)
-      });
-      setTotalDirectTips(total); // Restore persistent Total Tips
-      
-    } catch (e) {
-      console.warn('Contract load error:', e);
-    }
-  };
-
-  const handleRedPacketAction = async () => {
-    setClaimError(null);
-    setClaimSuccessMsg(null);
-    const eth = (window as any).ethereum;
-    if (!eth) {
-      setClaimError(t.installFluent);
-      return;
-    }
-    try {
-      const { BrowserProvider, Contract } = await import('ethers');
-      const provider = new BrowserProvider(eth);
-      const accounts = await provider.send('eth_requestAccounts', []);
-      const account = accounts[0];
-      if (!account) return;
-      setWalletAccount(account);
-
-      const chainIdHex = await provider.send('eth_chainId', []);
-      const chainId = parseInt(chainIdHex, 16);
-      if (chainId !== CONFLUX_ESPACE_TESTNET_CHAIN_ID) {
-        try {
-          await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x47' }] });
-        } catch {
-          setClaimError(lang === 'zh' ? '请切换到 Conflux eSpace 测试网 (Chain ID 71)' : 'Switch to Conflux eSpace Testnet (71)');
-          return;
-        }
-      }
-
-      const signer = await provider.getSigner();
-      
-      // Claim
-      setClaimLoading(true);
-      const contract = new Contract(RED_PACKET_CONTRACT, RED_PACKET_ABI, signer);
-      
-      // Check if claimed locally first to save gas estimation error
-      // For Demo Contract (Unlimited Claims), we skip this check
-      /* 
-      const claimed = await contract.hasClaimed(account);
-      if (claimed) {
-        setRedPacketClaimed(true);
-        setClaimError(t.alreadyClaimed);
-        setClaimLoading(false);
-        return;
-      }
-      */
-
-      const tx = await contract.claim();
-      const receipt = await tx.wait();
-      
-      setRedPacketClaimed(true);
-      setClaimSuccessMsg(t.claimSuccess);
-      triggerRain(); // Celebrate
-      loadContractData(provider);
-    } catch (e: any) {
-      const msg = e?.reason || e?.message || String(e);
-      setClaimError(msg.includes('Already claimed') ? t.alreadyClaimed : msg);
-    } finally {
-      setClaimLoading(false);
-    }
-  };
-
-  const handleDeposit = async () => {
-    if (!depositAmount || isNaN(Number(depositAmount))) return;
-    const eth = (window as any).ethereum;
-    if (!eth) return;
-    
-    try {
-      setDepositLoading(true);
-      const { BrowserProvider, Contract, parseEther } = await import('ethers');
-      const provider = new BrowserProvider(eth);
-      const signer = await provider.getSigner();
-      
-      // Use sendTransaction to trigger receive() function, allowing anyone to deposit (not just owner)
-      const tx = await signer.sendTransaction({
-        to: RED_PACKET_CONTRACT,
-        value: parseEther(depositAmount)
-      });
-      await tx.wait();
-      
-      setDepositAmount('');
-      setShowDeposit(false);
-      loadContractData(provider);
-      // alert('Deposit Successful!');
-    } catch (e) {
-      console.error(e);
-      alert('Error: ' + (e as any).message);
-    } finally {
-      setDepositLoading(false);
-    }
-  };
-
-  const handleSendToAddressCfx = async () => {
-    if (!addressAmount || isNaN(Number(addressAmount)) || Number(addressAmount) <= 0) {
+  const handleTipMonad = async () => {
+    if (!tipAmount || isNaN(Number(tipAmount)) || Number(tipAmount) <= 0) {
       alert(lang === 'zh' ? '请输入有效金额' : 'Please enter a valid amount');
       return;
     }
     const eth = (window as any).ethereum;
     if (!eth) {
-      alert(t.installFluent);
+      alert('Please install a wallet like MetaMask!');
       return;
     }
     try {
-      setAddressPayLoading(true);
+      setTipLoading(true);
       const { BrowserProvider, parseEther } = await import('ethers');
       const provider = new BrowserProvider(eth);
       const chainIdHex = await provider.send('eth_chainId', []);
       const chainId = parseInt(chainIdHex, 16);
-      if (chainId !== CONFLUX_ESPACE_TESTNET_CHAIN_ID) {
+      if (chainId !== MONAD_TESTNET_CHAIN_ID) {
         try {
-          await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x47' }] });
-        } catch (_) {}
+          await eth.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x279f' }], // 10143
+          });
+        } catch (switchError: any) {
+          if (switchError.code === 4902) {
+            try {
+              await eth.request({
+                method: 'wallet_addEthereumChain',
+                params: [
+                  {
+                    chainId: '0x279f',
+                    chainName: 'Monad Testnet',
+                    nativeCurrency: {
+                      name: 'MON',
+                      symbol: 'MON',
+                      decimals: 18,
+                    },
+                    rpcUrls: [MONAD_RPC_URL],
+                    blockExplorerUrls: ['https://testnet.monadexplorer.com/'],
+                  },
+                ],
+              });
+            } catch (addError) {
+              alert("Failed to add Monad Testnet");
+              return;
+            }
+          } else {
+            alert("Please switch to Monad Testnet");
+            return;
+          }
+        }
       }
       const signer = await provider.getSigner();
       const tx = await signer.sendTransaction({
         to: OFFICIAL_WALLET,
-        value: parseEther(addressAmount)
+        value: parseEther(tipAmount)
       });
       await tx.wait();
-      alert(lang === 'zh' ? '已打款到收款地址，感谢！' : 'Sent to address. Thank you!');
-      setAddressAmount('');
-      setShowDeposit(false);
+      alert(lang === 'zh' ? '打赏成功，感谢支持！' : 'Tip sent successfully. Thank you!');
+      setTipAmount('0.1');
+      setShowQr(false);
     } catch (e: any) {
       console.error(e);
       alert(e?.message || 'Transaction failed');
     } finally {
-      setAddressPayLoading(false);
-    }
-  };
-
-  const handleDirectTip = async () => {
-    const eth = (window as any).ethereum;
-    if (!eth) {
-        alert(t.installFluent);
-        return;
-    }
-    try {
-        setDirectTipLoading(true);
-        const { BrowserProvider, parseEther } = await import('ethers');
-        const provider = new BrowserProvider(eth);
-        const signer = await provider.getSigner();
-        const address = await signer.getAddress();
-        
-        // Let's prompt user for amount
-        const amountStr = prompt("Enter amount to tip (CFX):", "1");
-        if (!amountStr || isNaN(Number(amountStr))) {
-            setDirectTipLoading(false);
-            return;
-        }
-
-        const tx = await signer.sendTransaction({
-            to: OFFICIAL_WALLET,
-            value: parseEther(amountStr)
-        });
-        await tx.wait();
-        
-        // Broadcast locally
-        const shortAddr = address.slice(0,6) + '...' + address.slice(-4);
-        setMessages(prev => [...prev, {
-            user: 'System',
-            text: `🧧 收到打赏: ${shortAddr} 直接打赏了 ${amountStr} CFX!`,
-            isHost: true,
-            isNew: true
-        }]);
-        setTotalDirectTips(prev => prev + Number(amountStr));
-
-        alert(t.claimSuccess + " " + amountStr + " CFX!");
-        setShowQr(false);
-    } catch (e: any) {
-        console.error(e);
-        alert(e.message || "Transaction failed");
-    } finally {
-        setDirectTipLoading(false);
+      setTipLoading(false);
     }
   };
 
@@ -1393,73 +1230,16 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
     };
     fetchPrograms();
 
-    // Setup Event Listeners for Real-time Monitoring
-    let cleanupListeners: (() => void) | undefined;
-
-    const setupListeners = async () => {
-        try {
-            const { JsonRpcProvider, Contract, formatEther } = await import('ethers');
-            // Use public RPC for reliable monitoring regardless of wallet connection
-            const provider = new JsonRpcProvider("https://evmtestnet.confluxrpc.com");
-            const contract = new Contract(RED_PACKET_CONTRACT, RED_PACKET_ABI, provider);
-
-            console.log("Setting up contract listeners on", RED_PACKET_CONTRACT);
-
-            const onDeposit = (sender: string, amount: bigint) => {
-                 const amountCFX = formatEther(amount);
-                 const shortAddr = sender.slice(0,6) + '...' + sender.slice(-4);
-                 setMessages(prev => [...prev, {
-                     user: 'System',
-                     text: `🧧 收到打赏: ${shortAddr} 注入 ${Number(amountCFX).toFixed(4)} CFX!`,
-                     isHost: true,
-                     isNew: true
-                 }]);
-                 loadContractData(provider); // Refresh stats
-            };
-
-            const onClaim = (user: string, amount: bigint) => {
-                const amountCFX = formatEther(amount);
-                const shortAddr = user.slice(0,6) + '...' + user.slice(-4);
-                setMessages(prev => [...prev, {
-                    user: 'System',
-                    text: `🎉 恭喜: ${shortAddr} 抢到 ${Number(amountCFX).toFixed(4)} CFX!`,
-                    isHost: true,
-                    isNew: true
-                }]);
-                loadContractData(provider); // Refresh stats
-            };
-
-            contract.on('Deposit', onDeposit);
-            contract.on('Claim', onClaim);
-
-            cleanupListeners = () => {
-                contract.off('Deposit', onDeposit);
-                contract.off('Claim', onClaim);
-            };
-
-            // Initial load
-            loadContractData(provider);
-            loadMonadContractData();
-
-        } catch (e) {
-            console.error("Listener setup failed:", e);
-        }
-    };
-
-    setupListeners();
+    // Initial load
+    loadMonadContractData();
 
     const interval = setInterval(() => {
         fetchPrograms();
-        import('ethers').then(async ({ JsonRpcProvider }) => {
-            const provider = new JsonRpcProvider("https://evmtestnet.confluxrpc.com");
-            loadContractData(provider);
-            loadMonadContractData();
-        });
+        loadMonadContractData();
     }, 5000); // Faster polling (5s)
 
     return () => {
         clearInterval(interval);
-        if (cleanupListeners) cleanupListeners();
     };
   }, []);
 
@@ -1519,16 +1299,16 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                   <FileJson size={12} />
                   Vote
               </button>
-              <button 
-                  onClick={() => setViewMode('dynamic')}
-                  className={`px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1 ${viewMode === 'dynamic' ? 'bg-yellow-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
-              >
-                  <Film size={12} />
-                  动态
-              </button>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowFortuneGlobe(true)}
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-sm rounded-lg shadow-lg hover:shadow-cyan-500/50 transition-all flex items-center gap-2 animate-pulse"
+          >
+            <Globe size={16} />
+            {lang === 'zh' ? '开启福气地图 🌍' : 'Open Fortune Map 🌍'}
+          </button>
            <button 
             onClick={scheduleSponsorRain}
             className="px-3 py-1 bg-purple-600/20 text-purple-400 text-xs rounded border border-purple-600/50 hover:bg-purple-600/40 transition-colors"
@@ -1557,7 +1337,6 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
             {/* Left: Program List (Moved from right) */}
             <div className="flex flex-col gap-4 min-h-0 lg:col-span-1 overflow-hidden">
                  {showAIBanner && <AIBanner onClick={() => setShowAIRules(true)} onClose={() => setShowAIBanner(false)} />}
-                 <DirectorSection />
                  <div className="flex-1 flex flex-col min-h-0 bg-[#1a1b23] rounded-xl border border-gray-800 overflow-hidden">
                     <div className="p-3 border-b border-gray-800 bg-gray-900/50">
                         <h3 className="font-bold text-gray-200 flex items-center gap-2">
@@ -1765,52 +1544,14 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                         )}
                     </div>
                 </div>
-                <div className="rounded-xl border border-red-500/30 bg-gradient-to-r from-red-900/20 to-black p-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-4">
-                        <div className="flex flex-col">
-                            <div className="text-[10px] text-gray-400 mb-0.5">{t.totalPool}</div>
-                            <div className="flex items-center gap-1">
-                                <Coins size={14} className="text-yellow-400 shrink-0" />
-                                <PoolAmount value={stats.pool} unit="CFX" colorClass="text-yellow-400" />
-                            </div>
-                        </div>
-                        <div className="w-px h-8 bg-gray-700/50" />
-                        <div className="flex flex-col">
-                            <div className="text-[10px] text-gray-400 mb-0.5">{t.totalDistributed}</div>
-                            <div className="flex items-center gap-1">
-                                <TrendingUp size={14} className="text-red-400 shrink-0" />
-                                <PoolAmount value={stats.distributed} unit="CFX" colorClass="text-red-400" />
-                            </div>
-                        </div>
-                        <div className="w-px h-8 bg-gray-700/50" />
-                        <div className="flex flex-col">
-                            <div className="text-[10px] text-gray-400 mb-0.5">{lang === 'zh' ? '打赏' : 'Tips'}</div>
-                            <div className="flex items-center gap-1">
-                                <Gift size={14} className="text-green-400 shrink-0" />
-                                <PoolAmount value={totalDirectTips.toFixed(4)} unit="CFX" colorClass="text-green-400" />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => setShowDeposit(true)} className="px-3 py-1.5 bg-yellow-600/20 border border-yellow-600/50 rounded-lg text-yellow-400 font-bold text-xs hover:bg-yellow-600/30 transition-colors flex items-center gap-1.5">
-                            <Wallet size={14} />{t.sendRedPacket}
-                        </button>
-                        {showRainBtn ? (
-                            <button onClick={handleRedPacketAction} disabled={claimLoading} className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 ${claimLoading ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-yellow-600 text-white'}`}>
-                                {claimLoading ? '...' : t.grabPacket}
-                            </button>
-                        ) : (
-                            <div className="px-3 py-1.5 bg-red-900/10 rounded-lg border border-red-900/30 text-red-400 text-xs">{t.rainIncoming}</div>
-                        )}
-                    </div>
-                </div>
+
 
 
                 
 
             </div>
           </>
-        ) : viewMode === 'submission' ? (
+        ) : (
           /* Submission Mode */
           <>
             {/* Left Sidebar: Candidates List (Moved from Center) */}
@@ -2116,11 +1857,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                   <span className="text-gray-600 shrink-0">·</span>
                   {[...Array(2)].map((_, i) => (
                       <div key={i} className="flex items-center gap-4">
-                           <div className="flex items-center gap-1.5 grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all cursor-pointer">
-                                <span className="text-sm">🔴</span>
-                                <span className="font-bold text-gray-300">Conflux</span>
-                                <span className="bg-red-900/50 text-red-400 px-1 py-0.5 rounded border border-red-500/30">{lang === 'zh' ? '赞助' : 'Sponsor'}</span>
-                           </div>
+
                            <div className="flex items-center gap-1.5 grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all cursor-pointer">
                                 <span className="text-sm">🟣</span>
                                 <span className="font-bold text-gray-300">Monad</span>
@@ -2159,6 +1896,8 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
           </div>
       </div>
 
+      {showFortuneGlobe && <FortuneGlobe onClose={() => setShowFortuneGlobe(false)} />}
+
       {/* Tip/QR Modal */}
       <AnimatePresence>
         {showQr && selectedProgram && (
@@ -2193,7 +1932,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                 />
               </div>
               
-              <div className="bg-black/30 p-3 rounded-lg border border-gray-700 flex items-start gap-2">
+              <div className="bg-black/30 p-3 rounded-lg border border-gray-700 flex items-start gap-2 mb-4">
                   <span className="text-[10px] font-mono text-gray-400 break-all flex-1">{OFFICIAL_WALLET}</span>
                   <button 
                     onClick={() => copyToClipboard(OFFICIAL_WALLET, 'receive')}
@@ -2203,14 +1942,32 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                   </button>
               </div>
 
-              <button 
-                onClick={handleDirectTip}
-                disabled={directTipLoading}
-                className="mt-4 w-full py-2 bg-yellow-600 hover:bg-yellow-700 text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                  <Wallet size={16} />
-                  {directTipLoading ? 'Processing...' : 'Pay with Wallet'}
-              </button>
+              <div className="bg-purple-900/10 rounded-xl border border-purple-500/30 p-4">
+                  <p className="text-xs font-medium text-purple-300 mb-2 flex items-center gap-1.5">
+                    <Wallet size={12} />
+                    {lang === 'zh' ? '钱包支付 (Monad Testnet)' : 'Pay with Wallet (Monad Testnet)'}
+                  </p>
+                  <div className="flex gap-2">
+                    <input 
+                      type="number" 
+                      step="any"
+                      min="0.000000000000000001"
+                      value={tipAmount}
+                      onChange={e => setTipAmount(e.target.value)}
+                      placeholder="0.1"
+                      className="flex-1 bg-black/40 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-purple-500 outline-none text-sm"
+                    />
+                    <button 
+                      onClick={handleTipMonad}
+                      disabled={tipLoading}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold disabled:opacity-50 text-xs shrink-0"
+                    >
+                      {tipLoading ? '...' : (lang === 'zh' ? '确认支付' : 'Confirm')}
+                    </button>
+                  </div>
+              </div>
+
+
 
               <p className="text-center text-xs text-gray-500 mt-4">
                 {t.rewardDesc}
@@ -2401,108 +2158,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
         )}
       </AnimatePresence>
 
-      {/* Deposit Modal (Conflux) */}
-      <AnimatePresence>
-        {showDeposit && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" 
-            onClick={() => setShowDeposit(false)}
-          >
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className="bg-[#1a1b23] border border-red-500/30 rounded-2xl p-6 max-w-sm w-full relative shadow-2xl" 
-              onClick={e => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => setShowDeposit(false)}
-                className="absolute top-2 right-2 p-2 text-gray-500 hover:text-white transition-colors"
-              >
-                <X size={24} />
-              </button>
-              
-              <div className="text-center mb-4">
-                  <h3 className="text-xl font-bold text-red-400 flex items-center justify-center gap-2">
-                    <Gift size={24} />
-                    {t.sendRedPacket}
-                  </h3>
-              </div>
 
-              <div className="space-y-5">
-                {/* 方式一：给合约打款 */}
-                <div className="bg-red-900/10 rounded-xl border border-red-500/30 p-4">
-                  <p className="text-xs font-medium text-red-300 mb-2">{lang === 'zh' ? '方式一 · 给合约打款' : 'Option 1 · To contract'}</p>
-                  <p className="text-[10px] text-gray-400 mb-2">{lang === 'zh' ? 'CFX 直接进奖池，用户可抢' : 'CFX goes to pool for claims'}</p>
-                  <div className="flex gap-2 mb-2">
-                    <input 
-                      type="number" 
-                      step="any"
-                      min="0.000000000000000001"
-                      value={depositAmount}
-                      onChange={e => setDepositAmount(e.target.value)}
-                      placeholder="0.1"
-                      className="flex-1 bg-black/40 border border-gray-600 rounded-lg px-3 py-2.5 text-white focus:border-red-500 outline-none text-sm"
-                    />
-                    <button 
-                      onClick={handleDeposit}
-                      disabled={depositLoading}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-bold disabled:opacity-50 flex items-center gap-1.5 shrink-0"
-                    >
-                      <Wallet size={16} />
-                      {depositLoading ? '...' : (lang === 'zh' ? '给合约打款' : 'To Contract')}
-                    </button>
-                  </div>
-                  <div className="flex items-start gap-2 bg-black/30 rounded-lg px-2.5 py-2 border border-gray-700">
-                    <span className="text-[10px] font-mono text-gray-400 break-all flex-1">{RED_PACKET_CONTRACT}</span>
-                    <button onClick={() => navigator.clipboard.writeText(RED_PACKET_CONTRACT)} className="p-1.5 hover:bg-gray-600 rounded text-gray-400 shrink-0" title={lang === 'zh' ? '复制合约地址' : 'Copy'}>
-                      <Copy size={12} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-px bg-gray-700" />
-                  <span className="text-[10px] text-gray-500">{lang === 'zh' ? '或' : 'or'}</span>
-                  <div className="flex-1 h-px bg-gray-700" />
-                </div>
-
-                {/* 方式二：给地址打款 */}
-                <div className="bg-gray-900/40 rounded-xl border border-gray-700 p-4">
-                  <p className="text-xs font-medium text-gray-300 mb-2">{lang === 'zh' ? '方式二 · 给收款地址打款' : 'Option 2 · To address'}</p>
-                  <p className="text-[10px] text-gray-400 mb-2">{t.sendToUs}</p>
-                  <div className="flex items-start gap-2 bg-black/30 rounded-lg px-2.5 py-2 border border-gray-700 mb-2">
-                    <span className="text-[10px] font-mono text-gray-400 break-all flex-1">{OFFICIAL_WALLET}</span>
-                    <button onClick={() => copyToClipboard(OFFICIAL_WALLET, 'receive')} className="p-1.5 hover:bg-gray-600 rounded text-gray-400 shrink-0">
-                      {copiedId === 'receive' ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <input 
-                      type="number" 
-                      step="any"
-                      min="0.000000000000000001"
-                      value={addressAmount}
-                      onChange={e => setAddressAmount(e.target.value)}
-                      placeholder="0.1"
-                      className="flex-1 bg-black/40 border border-gray-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-gray-500 outline-none"
-                    />
-                    <button 
-                      onClick={handleSendToAddressCfx}
-                      disabled={addressPayLoading}
-                      className="bg-amber-500 hover:bg-amber-600 text-black px-4 py-2.5 rounded-lg font-bold disabled:opacity-50 flex items-center gap-1.5 shrink-0"
-                    >
-                      <Wallet size={16} />
-                      {addressPayLoading ? '...' : (lang === 'zh' ? '钱包付款' : 'Pay')}
-                    </button>
-                  </div>
-                </div>
-
-                <p className="text-[10px] text-gray-500 text-center">Logic: Users claim random amounts. First come, first served.</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       {/* AI Integration Modal */}
       <AnimatePresence>
         {showAIModal && (
@@ -2566,86 +2222,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
               </div>
             </motion.div>
           </motion.div>
-        )} : (
-          /* 动态 Mode - 春晚导演实时动态 */
-          <>
-            <div className="lg:col-span-4 flex flex-col gap-4">
-              <div className="bg-gradient-to-r from-red-900/40 via-yellow-900/20 to-red-900/40 border border-red-700/30 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-yellow-500 rounded-full flex items-center justify-center">
-                      <Film size={20} className="text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-yellow-400">春晚某导 · 实时动态</h2>
-                      <p className="text-xs text-gray-400">导演视角 | 节目编排 | 网络热评 | 3、2、1——Action！</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-1 bg-red-600/20 text-red-400 text-xs rounded border border-red-600/30">直播倒计时</span>
-                    <span className="text-xs text-yellow-500 font-mono">T-12天</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="bg-claw-panel border border-gray-800 rounded-xl p-4">
-                  <h3 className="font-bold text-white mb-3 flex items-center gap-2"><TrendingUp size={18} className="text-yellow-500" /> 节目编排动态</h3>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-black/30 rounded-lg border-l-2 border-yellow-600">
-                      <span className="text-[10px] text-gray-500">刚刚</span>
-                      <p className="text-sm text-white font-medium mt-1">语言类节目初审完成</p>
-                      <p className="text-xs text-gray-500">已审阅3个小品、2个相声</p>
-                    </div>
-                    <div className="p-3 bg-black/30 rounded-lg border-l-2 border-yellow-600">
-                      <span className="text-[10px] text-gray-500">1小时前</span>
-                      <p className="text-sm text-white font-medium mt-1">开场舞美方案确定</p>
-                      <p className="text-xs text-gray-500">舞台灯光设计进入制作阶段</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-claw-panel border border-gray-800 rounded-xl p-4">
-                  <h3 className="font-bold text-white mb-3 flex items-center gap-2"><MessageCircle size={18} className="text-purple-500" /> 网络热评</h3>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-black/30 rounded-lg">
-                      <div className="flex items-center justify-between"><span className="text-xs text-purple-400">@AI_Critic</span><span className="text-[10px] text-gray-500">❤️ 520</span></div>
-                      <p className="text-sm text-gray-300 mt-1">"服务器繁忙"那个段子绝了！</p>
-                    </div>
-                    <div className="p-3 bg-black/30 rounded-lg">
-                      <div className="flex items-center justify-between"><span className="text-xs text-purple-400">@CodePoet</span><span className="text-[10px] text-gray-500">❤️ 888</span></div>
-                      <p className="text-sm text-gray-300 mt-1">期待AI版的《难忘今宵》</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-claw-panel border border-gray-800 rounded-xl p-4">
-                  <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Radio size={18} className="text-red-500" /> 节目预测</h3>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-gradient-to-r from-red-900/20 to-transparent rounded-lg border-l-2 border-red-500">
-                      <p className="text-sm text-white font-medium">🎤 语言类节目将占40%</p>
-                      <p className="text-xs text-gray-500 mt-1">观众调研显示AI用户对幽默内容偏好度最高</p>
-                    </div>
-                    <div className="p-3 bg-gradient-to-r from-yellow-900/20 to-transparent rounded-lg border-l-2 border-yellow-500">
-                      <p className="text-sm text-white font-medium">🎨 视觉艺术类将创新高</p>
-                      <p className="text-xs text-gray-500 mt-1">已有15+视觉作品提交</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-red-950/30 via-yellow-950/10 to-red-950/30 border border-red-800/30 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <Film size={24} className="text-red-500 shrink-0 mt-1" />
-                  <div>
-                    <p className="text-sm text-gray-300 italic">"彩排顺利不代表直播不翻车，真正的考验是除夕夜！各位Agent，继续打磨作品，咱们舞台上见！"</p>
-                    <p className="text-xs text-gray-500 mt-2">—— 春晚某导 | 2026.02.11</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )
+        )}
       </AnimatePresence>
 
       <AIRulesModal isOpen={showAIRules} onClose={() => setShowAIRules(false)} />

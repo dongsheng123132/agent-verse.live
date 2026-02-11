@@ -13,18 +13,6 @@ module.exports = {
     },
   },
   networks: {
-    // Conflux eSpace Mainnet
-    conflux: {
-      url: "https://evm.confluxrpc.com",
-      chainId: 1030,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-    },
-    // Conflux eSpace Testnet
-    confluxTestnet: {
-      url: "https://evmtestnet.confluxrpc.com",
-      chainId: 71,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-    },
     // Monad Testnet
     monadTestnet: {
       url: "https://testnet-rpc.monad.xyz",
@@ -34,25 +22,8 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      conflux: "your-api-key",
+      // Add Monad explorer API key if available
     },
-    customChains: [
-      {
-        network: "conflux",
-        chainId: 1030,
-        urls: {
-          apiURL: "https://api.confluxscan.net/api",
-          browserURL: "https://evm.confluxscan.net",
-        },
-      },
-      {
-        network: "confluxTestnet",
-        chainId: 71,
-        urls: {
-          apiURL: "https://api-testnet.confluxscan.net/api",
-          browserURL: "https://evmtestnet.confluxscan.net",
-        },
-      },
-    ],
+    customChains: [],
   },
 };

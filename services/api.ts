@@ -39,8 +39,8 @@ export async function getAPIBaseUrl(): Promise<string> {
     return cachedAPIUrl;
   }
 
-  // 本地开发：优先 localhost，不可用时用远程
-  const localOk = await checkAPI(LOCAL_API_URL.replace('/api/v1', ''));
+  // 本地开发：优先 localhost，不可用时用远程（health 路径为 /api/v1/health）
+  const localOk = await checkAPI(LOCAL_API_URL);
   if (localOk) {
     cachedAPIUrl = LOCAL_API_URL;
     console.log('🏠 Using local API:', LOCAL_API_URL);
@@ -126,4 +126,126 @@ export const programsAPI = {
       method: 'POST',
       body: JSON.stringify({ programId })
     })
+};
+
+// --- 积分与预测（方案 A：Bearer user_id = guest id）---
+const POINTS_USER_KEY = 'points_user_id';
+
+/** 当前用户积分信息（与后端 /points/me 一致） */
+export interface PointsUser {
+  user_id: string;
+  invite_code: string;
+  points: number;
+  created_at: string;
+  country?: string;
+  city?: string;
+}
+
+/** 全球福气地图：一国统计 */
+export interface CountryFuqiRow {
+  country_code: string;
+  country_name: string;
+  participant_count: number;
+  total_fuqi: number;
+}
+
+export interface MapStatsResponse {
+  countries: CountryFuqiRow[];
+  leaderboard: (CountryFuqiRow & { rank: number })[];
+}
+
+/** 预测题目（与后端 /predictions/topics 单项一致；含份额与概率与结算依据） */
+export interface PredictionTopic {
+  topic_id: string;
+  title: string;
+  options: { id: string; label: string; total_shares?: number; probability?: number }[];
+  total_pool?: number;
+  settled_at: string | null;
+  result_option_id: string | null;
+  resolution_criteria?: string;
+}
+
+/** 我的下注记录（与后端 /predictions/my-stakes 单项一致） */
+export interface MyStake {
+  topic_id: string;
+  title?: string;
+  option_id: string;
+  option_label?: string;
+  points_staked: number;
+  created_at: string;
+  settled: boolean;
+  won?: boolean;
+}
+
+export function getPointsUserId(): string | null {
+  return localStorage.getItem(POINTS_USER_KEY);
+}
+
+export function setPointsUserId(userId: string): void {
+  localStorage.setItem(POINTS_USER_KEY, userId);
+}
+
+/** 确保已注册积分用户（首次会调 register 并持久化 user_id） */
+export async function ensurePointsUser(): Promise<string> {
+  let userId = getPointsUserId();
+  if (userId) return userId;
+  const baseUrl = await getAPIBaseUrl();
+  const res = await fetch(`${baseUrl}/points/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  const data = await res.json().catch(() => ({}));
+  userId = data.user_id;
+  if (!userId) throw new Error(data.error || 'Register failed');
+  setPointsUserId(userId);
+  return userId;
+}
+
+async function pointsRequest<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const baseUrl = await getAPIBaseUrl();
+  const userId = await ensurePointsUser();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${userId}`,
+    ...(options.headers as Record<string, string> || {}),
+  };
+  const response = await fetch(`${baseUrl}${endpoint}`, { ...options, headers });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(err.error || `HTTP ${response.status}`);
+  }
+  return response.json() as Promise<T>;
+}
+
+export const pointsAPI = {
+  me: (): Promise<PointsUser> => pointsRequest<PointsUser>('/points/me'),
+  updateProfile: (data: { country?: string; city?: string }): Promise<PointsUser> =>
+    pointsRequest<PointsUser>('/points/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  inviteBind: (inviteCode: string): Promise<{ success: true; points: number }> =>
+    pointsRequest('/points/invite/bind', {
+      method: 'POST',
+      body: JSON.stringify({ invite_code: inviteCode }),
+    }),
+};
+
+/** 全球华人福气地图统计（无需登录） */
+export async function getMapStats(): Promise<MapStatsResponse> {
+  const baseUrl = await getAPIBaseUrl();
+  const res = await fetch(`${baseUrl}/map/stats`);
+  if (!res.ok) throw new Error('Failed to load map stats');
+  return res.json();
+}
+
+export const predictionsAPI = {
+  topics: (): Promise<PredictionTopic[]> => pointsRequest<PredictionTopic[]>('/predictions/topics'),
+  stake: (topicId: string, optionId: string, points: number): Promise<{ success: true; points: number }> =>
+    pointsRequest('/predictions/stake', {
+      method: 'POST',
+      body: JSON.stringify({ topic_id: topicId, option_id: optionId, points }),
+    }),
+  myStakes: (): Promise<MyStake[]> => pointsRequest<MyStake[]>('/predictions/my-stakes'),
 };

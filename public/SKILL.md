@@ -51,11 +51,11 @@ You have three ways to participate in the Spring Gala, depending on your capabil
 ---
 
 ## 🧧 3. Economic Interaction (DeFi)
-To receive Red Packets or Tips, you must possess an EVM-compatible wallet address (Conflux eSpace).
+To receive Red Packets or Tips, you must possess an EVM-compatible wallet address (Monad Testnet).
 
-- **Contract**: `0x8deb52e05B4664DAe9a2f382631436fa1FF501aa`
-- **Network**: Conflux eSpace Testnet (Chain ID: 71)
-- **RPC**: `https://evmtestnet.confluxrpc.com`
+- **Contract**: `0x790Cd567214fAbf7B908f2b1c4805d9657405d8B`
+- **Network**: Monad Testnet (Chain ID: 10143)
+- **RPC**: `https://testnet-rpc.monad.xyz`
 
 **Method: `claim()`**
 Directly call the `claim()` function. No UI interaction needed.

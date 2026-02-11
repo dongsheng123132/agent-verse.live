@@ -1,25 +1,29 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { NavSection } from '../types';
-import { LayoutGrid, Map, Calendar, ShoppingBag, Wallet, MessageSquare, PartyPopper, Newspaper, BarChart } from 'lucide-react';
+import { LayoutGrid, Map, Calendar, ShoppingBag, Wallet, MessageSquare, PartyPopper, Newspaper } from 'lucide-react';
 
 interface NavigationProps {
   currentSection: NavSection;
   setSection: (section: NavSection) => void;
+  displaySection?: NavSection;
 }
 
-export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSection }) => {
+export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSection, displaySection: displaySectionProp }) => {
   const location = useLocation();
-  const isChunwan = location.pathname === '/chunwan';
+  const pathname = location.pathname;
+  const displaySection = displaySectionProp ?? currentSection;
+  const isChunwan = pathname === '/chunwan' || pathname === '/points' || pathname === '/predictions' || pathname === '/map';
+  const isForum = pathname === '/forum';
 
-  const navItems = [
+  const navItems: Array<{ id: NavSection; label: string; icon: React.ElementType; href?: string }> = [
     { id: NavSection.HOME, label: 'Dashboard', icon: LayoutGrid },
     { id: NavSection.MAP, label: 'World Map', icon: Map },
     { id: NavSection.EVENTS, label: 'Events', icon: Calendar },
     { id: NavSection.MARKET, label: 'Market', icon: ShoppingBag },
-    { id: NavSection.FORUM, label: 'Forum', icon: MessageSquare },
+    { id: NavSection.FORUM, label: 'Forum', icon: MessageSquare, href: '/forum' },
     { id: NavSection.AI_CONTENT, label: 'AI Insights', icon: Newspaper },
-    { id: NavSection.GALA, label: '春晚', icon: PartyPopper, href: '/chunwan' }, // 独立板块，AI/用户自己去折腾
+    { id: NavSection.GALA, label: '春晚', icon: PartyPopper, href: '/chunwan' },
   ];
 
   return (
@@ -35,17 +39,22 @@ export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSecti
 
       <div className="hidden md:flex gap-1">
         {navItems.map((item) => {
-          const isActive = 'href' in item ? isChunwan : currentSection === item.id;
-          const activeClass = 'href' in item && isChunwan
+          const isLink = 'href' in item && item.href;
+          const isActive = isLink
+            ? (item.href === '/chunwan' && isChunwan) || (item.href === '/forum' && isForum)
+            : displaySection === item.id;
+          const activeClass = isChunwan && item.href === '/chunwan'
             ? 'bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400'
-            : isActive
+            : isForum && item.href === '/forum'
+              ? 'bg-claw-accent/20 text-claw-accent'
+              : isActive
               ? 'bg-claw-accent/20 text-claw-accent'
               : 'text-gray-400 hover:text-white hover:bg-white/5';
-          if ('href' in item && item.href) {
+          if (isLink) {
             return (
               <Link
                 key={item.id}
-                to={item.href}
+                to={item.href!}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${activeClass}`}
               >
                 <item.icon size={16} />
@@ -56,7 +65,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentSection, setSecti
           return (
             <button
               key={item.id}
-              onClick={() => setSection(item.id)}
+              onClick={() => setSection(item.id as NavSection)}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all ${activeClass}`}
             >
               <item.icon size={16} />

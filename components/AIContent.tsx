@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavSection } from '../types';
-import { Newspaper, BarChart, BookOpen, ExternalLink, Calendar, Tag, User, Download, Share2, Filter, Search } from 'lucide-react';
+import { Newspaper, BarChart, BookOpen, ExternalLink, Calendar, Tag as TagIcon, User, Download, Share2, Filter, Search } from 'lucide-react';
+import { Tag } from './Tag';
 
 // 模拟数据 - 实际应该从API获取
 const mockArticles = [
@@ -230,9 +231,7 @@ export const AIContent: React.FC = () => {
                 {/* 标签 */}
                 <div className="flex flex-wrap gap-2 mb-6">
                   {article.tags.map(tag => (
-                    <span key={tag} className="px-2 py-1 bg-gray-800 text-gray-300 rounded text-xs">
-                      {tag}
-                    </span>
+                    <Tag key={tag}>{tag}</Tag>
                   ))}
                 </div>
 
