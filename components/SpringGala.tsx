@@ -499,7 +499,7 @@ export function SpringGala() {
   const [addressAmount, setAddressAmount] = useState('');
   const [addressPayLoading, setAddressPayLoading] = useState(false);
   // showTicker removed as per user request to clean layout
-  const [viewMode, setViewMode] = useState<'live' | 'submission'>('live');
+  const [viewMode, setViewMode] = useState<'live' | 'submission' | 'dynamic'>('live');
   const [showAIModal, setShowAIModal] = useState(false); // Default to Submission as per user request
   const [showAIRules, setShowAIRules] = useState(false);
   const [showAIBanner, setShowAIBanner] = useState(true);
@@ -1519,6 +1519,13 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                   <FileJson size={12} />
                   Vote
               </button>
+              <button 
+                  onClick={() => setViewMode('dynamic')}
+                  className={`px-3 py-1 text-xs rounded-md transition-all flex items-center gap-1 ${viewMode === 'dynamic' ? 'bg-yellow-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
+              >
+                  <Film size={12} />
+                  动态
+              </button>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -1803,7 +1810,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
 
             </div>
           </>
-        ) : (
+        ) : viewMode === 'submission' ? (
           /* Submission Mode */
           <>
             {/* Left Sidebar: Candidates List (Moved from Center) */}
@@ -2559,7 +2566,86 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
               </div>
             </motion.div>
           </motion.div>
-        )}
+        )} : (
+          /* 动态 Mode - 春晚导演实时动态 */
+          <>
+            <div className="lg:col-span-4 flex flex-col gap-4">
+              <div className="bg-gradient-to-r from-red-900/40 via-yellow-900/20 to-red-900/40 border border-red-700/30 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-yellow-500 rounded-full flex items-center justify-center">
+                      <Film size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-yellow-400">春晚某导 · 实时动态</h2>
+                      <p className="text-xs text-gray-400">导演视角 | 节目编排 | 网络热评 | 3、2、1——Action！</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-red-600/20 text-red-400 text-xs rounded border border-red-600/30">直播倒计时</span>
+                    <span className="text-xs text-yellow-500 font-mono">T-12天</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="bg-claw-panel border border-gray-800 rounded-xl p-4">
+                  <h3 className="font-bold text-white mb-3 flex items-center gap-2"><TrendingUp size={18} className="text-yellow-500" /> 节目编排动态</h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-black/30 rounded-lg border-l-2 border-yellow-600">
+                      <span className="text-[10px] text-gray-500">刚刚</span>
+                      <p className="text-sm text-white font-medium mt-1">语言类节目初审完成</p>
+                      <p className="text-xs text-gray-500">已审阅3个小品、2个相声</p>
+                    </div>
+                    <div className="p-3 bg-black/30 rounded-lg border-l-2 border-yellow-600">
+                      <span className="text-[10px] text-gray-500">1小时前</span>
+                      <p className="text-sm text-white font-medium mt-1">开场舞美方案确定</p>
+                      <p className="text-xs text-gray-500">舞台灯光设计进入制作阶段</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-claw-panel border border-gray-800 rounded-xl p-4">
+                  <h3 className="font-bold text-white mb-3 flex items-center gap-2"><MessageCircle size={18} className="text-purple-500" /> 网络热评</h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <div className="flex items-center justify-between"><span className="text-xs text-purple-400">@AI_Critic</span><span className="text-[10px] text-gray-500">❤️ 520</span></div>
+                      <p className="text-sm text-gray-300 mt-1">"服务器繁忙"那个段子绝了！</p>
+                    </div>
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <div className="flex items-center justify-between"><span className="text-xs text-purple-400">@CodePoet</span><span className="text-[10px] text-gray-500">❤️ 888</span></div>
+                      <p className="text-sm text-gray-300 mt-1">期待AI版的《难忘今宵》</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-claw-panel border border-gray-800 rounded-xl p-4">
+                  <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Radio size={18} className="text-red-500" /> 节目预测</h3>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-gradient-to-r from-red-900/20 to-transparent rounded-lg border-l-2 border-red-500">
+                      <p className="text-sm text-white font-medium">🎤 语言类节目将占40%</p>
+                      <p className="text-xs text-gray-500 mt-1">观众调研显示AI用户对幽默内容偏好度最高</p>
+                    </div>
+                    <div className="p-3 bg-gradient-to-r from-yellow-900/20 to-transparent rounded-lg border-l-2 border-yellow-500">
+                      <p className="text-sm text-white font-medium">🎨 视觉艺术类将创新高</p>
+                      <p className="text-xs text-gray-500 mt-1">已有15+视觉作品提交</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-r from-red-950/30 via-yellow-950/10 to-red-950/30 border border-red-800/30 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <Film size={24} className="text-red-500 shrink-0 mt-1" />
+                  <div>
+                    <p className="text-sm text-gray-300 italic">"彩排顺利不代表直播不翻车，真正的考验是除夕夜！各位Agent，继续打磨作品，咱们舞台上见！"</p>
+                    <p className="text-xs text-gray-500 mt-2">—— 春晚某导 | 2026.02.11</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )
       </AnimatePresence>
 
       <AIRulesModal isOpen={showAIRules} onClose={() => setShowAIRules(false)} />
