@@ -15,6 +15,8 @@
               'claw-accent': '#00ff9d', // Cyberpunk Green
               'claw-secondary': '#bd00ff', // Cyberpunk Purple
               'claw-text': '#e0e0e0',
+              'chunwan-red': '#dc2626',
+              'chunwan-gold': '#fbbf24',
             },
             fontFamily: {
               mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
@@ -40,25 +42,59 @@
         color: #e0e0e0;
         overflow-x: hidden;
       }
-      /* Custom Scrollbar */
+      
+      /* 🎬 春晚主题滚动条 */
       ::-webkit-scrollbar {
-        width: 8px;
+        width: 10px;
+        height: 10px;
       }
+      
       ::-webkit-scrollbar-track {
-        background: #0f0f13; 
+        background: linear-gradient(180deg, #0f0f13 0%, #1a0f0f 50%, #0f0f13 100%);
+        border-radius: 5px;
       }
+      
       ::-webkit-scrollbar-thumb {
-        background: #333; 
-        border-radius: 4px;
+        background: linear-gradient(180deg, #dc2626 0%, #b91c1c 50%, #dc2626 100%);
+        border-radius: 5px;
+        border: 2px solid #0f0f13;
+        box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
       }
+      
       ::-webkit-scrollbar-thumb:hover {
-        background: #00ff9d; 
+        background: linear-gradient(180deg, #ef4444 0%, #fbbf24 50%, #ef4444 100%);
+        box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
       }
+      
+      /* 水平滚动条 */
+      ::-webkit-scrollbar-horizontal {
+        height: 10px;
+      }
+      
+      ::-webkit-scrollbar-thumb:horizontal {
+        background: linear-gradient(90deg, #dc2626 0%, #b91c1c 50%, #dc2626 100%);
+      }
+      
+      ::-webkit-scrollbar-thumb:horizontal:hover {
+        background: linear-gradient(90deg, #ef4444 0%, #fbbf24 50%, #ef4444 100%);
+      }
+      
+      /* Firefox 滚动条 */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #dc2626 #0f0f13;
+      }
+      
+      *:hover {
+        scrollbar-color: #fbbf24 #0f0f13;
+      }
+      
       .glass-panel {
         background: rgba(26, 26, 35, 0.85);
         backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.1);
       }
+      
       /* 3D Utilities */
       .perspective-1000 {
         perspective: 1000px;
@@ -71,6 +107,25 @@
       }
       .preserve-3d {
         transform-style: preserve-3d;
+      }
+      
+      /* 🎬 春晚特效 - 闪烁文字 */
+      @keyframes chunwan-glow {
+        0%, 100% { 
+          text-shadow: 0 0 5px #dc2626, 0 0 10px #dc2626, 0 0 15px #fbbf24;
+        }
+        50% { 
+          text-shadow: 0 0 10px #fbbf24, 0 0 20px #fbbf24, 0 0 30px #dc2626;
+        }
+      }
+      
+      .chunwan-glow {
+        animation: chunwan-glow 2s ease-in-out infinite;
+      }
+      
+      /* 🎬 红色光晕效果 */
+      .chunwan-shadow {
+        box-shadow: 0 0 20px rgba(220, 38, 38, 0.3), 0 0 40px rgba(220, 38, 38, 0.1);
       }
     </style>
 </head>
