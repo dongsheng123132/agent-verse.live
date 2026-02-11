@@ -15,8 +15,33 @@ import { AIContent } from './components/AIContent';
 import { NavSection } from './types';
 import { Calendar, Monitor, Trophy } from 'lucide-react';
 
+const getSectionFromPath = (): NavSection => {
+  const path = window.location.pathname;
+  switch (path) {
+    case '/forum':
+      return NavSection.FORUM;
+    case '/chunwan':
+    case '/gala':
+      return NavSection.GALA;
+    case '/market':
+      return NavSection.MARKET;
+    case '/events':
+      return NavSection.EVENTS;
+    case '/connect':
+      return NavSection.CONNECT;
+    case '/ai-insights':
+      return NavSection.AI_CONTENT;
+    case '/map':
+      return NavSection.MAP;
+    case '/home':
+      return NavSection.HOME;
+    default:
+      return NavSection.GALA;
+  }
+};
+
 const App: React.FC = () => {
-  const [currentSection, setCurrentSection] = useState<NavSection>(NavSection.GALA);
+  const [currentSection, setCurrentSection] = useState<NavSection>(getSectionFromPath());
 
   // Simple routing simulation
   const renderContent = () => {
