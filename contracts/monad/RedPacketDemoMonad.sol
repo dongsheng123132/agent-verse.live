@@ -37,8 +37,15 @@ contract RedPacketDemoMonad {
         totalClaimed = 0;
         totalDistributed = 0;
     }
+
+    /**
+     * @notice 允许直接转账充值
+     */
+    receive() external payable {
+        emit Deposit(msg.sender, msg.value);
+    }
     
-    function deposit() external payable onlyOwner {
+    function deposit() external payable {
         require(msg.value > 0, "Must send MON");
         emit Deposit(msg.sender, msg.value);
     }
@@ -121,9 +128,5 @@ contract RedPacketDemoMonad {
         )));
         
         return minAmount + (seed % (maxAmount - minAmount + 1));
-    }
-    
-    receive() external payable {
-        emit Deposit(msg.sender, msg.value);
     }
 }

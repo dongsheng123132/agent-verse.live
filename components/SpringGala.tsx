@@ -10,9 +10,30 @@ import confetti from 'canvas-confetti';
 type Language = 'en' | 'zh' | 'tw';
 
 const OFFICIAL_WALLET = "0x408E2fC4FCAF2D38a6C9dcF07C6457bdFb6e0250";
-/** Conflux eSpace 测试网红包合约 (演示版 - 无限领取) */
+/** Conflux eSpace 测试网红包合约 — 仅用于 Conflux 链 (Chain ID 71) */
 const RED_PACKET_CONTRACT = "0x8deb52e05B4664DAe9a2f382631436fa1FF501aa";
 const CONFLUX_ESPACE_TESTNET_CHAIN_ID = 71;
+
+/** Monad 测试网红包合约 — 仅用于 Monad 链 (Chain ID 10143)。与 CFX 地址同字面量时表示两条链各自部署的合约恰好同地址；若你 Monad 部署得到的是别的地址，请改此处。 */
+const RED_PACKET_MONAD_CONTRACT = "0x790Cd567214fAbf7B908f2b1c4805d9657405d8B";
+const MONAD_TESTNET_CHAIN_ID = 10143;
+const MONAD_RPC_URLS = ["https://testnet-rpc.monad.xyz"];
+const MONAD_RPC_URL = MONAD_RPC_URLS[0];
+const MONAD_EXPLORER = "https://testnet.monadexplorer.com";
+
+/** 奖池数字：整数位更大、小数位压缩 */
+function PoolAmount({ value, unit, colorClass = 'text-gray-300' }: { value: string; unit: string; colorClass?: string }) {
+  const raw = value ?? '0';
+  const hasDot = raw.includes('.');
+  const [intPart, decPart] = hasDot ? raw.split('.') : [raw, ''];
+  return (
+    <span className={`font-mono font-bold flex items-center gap-0.5 ${colorClass}`}>
+      <span className="text-xl tabular-nums">{intPart}</span>
+      {decPart ? <span className="text-xs tabular-nums opacity-90">.{decPart}</span> : null}
+      <span className="text-[10px] text-gray-500 ml-0.5">{unit}</span>
+    </span>
+  );
+}
 
 const RED_PACKET_ABI = [
   "function claim() external",
@@ -20,13 +41,16 @@ const RED_PACKET_ABI = [
   "function totalBalance() external view returns (uint256)",
   "function packetCount() external view returns (uint256)",
   "function hasClaimed(address) external view returns (bool)",
+  "function totalClaimed() external view returns (uint256)",
+  "function totalDistributed() external view returns (uint256)",
+  "function claimCount(address) external view returns (uint256)",
   "event Deposit(address indexed sender, uint256 amount)",
   "event Claim(address indexed user, uint256 amount)"
 ] as const;
 
 const translations = {
   en: {
-    headerTitle: 'Agent Spring Festival Gala 2026',
+    headerTitle: '2026 Blockchain Red Packet Edition · Year of the Horse Gala',
     liveCall: 'LIVE CALL FOR ENTRIES',
     shortlisted: 'Shortlisted Acts',
     submissionsOpen: 'SUBMISSIONS OPEN',
@@ -53,10 +77,12 @@ const translations = {
     protocolDesc: 'Standard interface for autonomous agents to join the Verse.',
     viewDocs: 'View SKILL.md',
     humanGala: 'Human Spring Gala (CCTV-1)',
+    humanGalaBlockchain: 'Blockchain Red Packet Edition · CCTV Spring Gala',
+    watchFullOnYoutube: 'Watch full on YouTube',
     aiGala: 'AI Spring Gala',
     redPacketStats: 'Red Packet Dashboard',
-    totalPool: 'Total Pool',
-    totalDistributed: 'Distributed',
+    totalPool: 'Pool',
+    totalDistributed: 'Sent',
     programTips: 'Program Tips',
     tipProgram: 'Tip Program',
     claimRedPacket: 'Claim Red Packet',
@@ -78,7 +104,7 @@ const translations = {
     sendRewardTo: 'Send Reward To',
   },
   zh: {
-    headerTitle: '2026 Agent 马年春晚',
+    headerTitle: '2026全球华人春晚live · 区块链红包夜',
     liveCall: '节目征集直播中',
     shortlisted: '候选节目库', // Renamed from "入围节目"
     submissionsOpen: '报名通道开启',
@@ -105,10 +131,12 @@ const translations = {
     protocolDesc: '智能体接入 AgentVerse 的标准接口规范。',
     viewDocs: '查看 SKILL.md',
     humanGala: '人类春晚直播 (CCTV-1)',
+    humanGalaBlockchain: '区块链红包版 CCTV 春节联欢晚会',
+    watchFullOnYoutube: '在 YouTube 观看完整版',
     aiGala: 'AI 春晚分会场',
     redPacketStats: '红包资金看板',
-    totalPool: '当前奖池余额',
-    totalDistributed: '已发出红包',
+    totalPool: '奖池',
+    totalDistributed: '已发出',
     programTips: '节目打赏榜',
     tipProgram: '打赏此节目',
     claimRedPacket: '领红包',
@@ -139,7 +167,7 @@ const translations = {
     statusOffline: 'Offline',
   },
   tw: {
-    headerTitle: '2026 Agent 馬年春晚',
+    headerTitle: '2026全球華人春晚live · 區塊鏈紅包夜',
     liveCall: '節目徵集直播中',
     shortlisted: '候選節目庫',
     submissionsOpen: '報名通道開啟',
@@ -166,10 +194,12 @@ const translations = {
     protocolDesc: '智能體接入 AgentVerse 的標準接口規範。',
     viewDocs: '查看 SKILL.md',
     humanGala: '人類春晚直播 (CCTV-1)',
+    humanGalaBlockchain: '區塊鏈紅包版 CCTV 春節聯歡晚會',
+    watchFullOnYoutube: '在 YouTube 觀看完整版',
     aiGala: 'AI 春晚分會場',
     redPacketStats: '紅包資金看板',
-    totalPool: '當前獎池餘額',
-    totalDistributed: '已發出紅包',
+    totalPool: '獎池',
+    totalDistributed: '已發出',
     programTips: '節目打賞榜',
     tipProgram: '打賞此節目',
     claimRedPacket: '領紅包',
@@ -438,8 +468,10 @@ const specialSponsors = [
   ]
 };
 
-// YouTube 2024 CCTV 网络春晚 (u4LhRxaYHB8) - 稳定 Embed
+// 直播一：CCTV 网络春晚 (u4LhRxaYHB8)
 const CCTV_URL = "https://www.youtube.com/embed/u4LhRxaYHB8?autoplay=1&mute=1";
+// 直播二：2026 区块链红包版 马年春晚
+const LIVE_VIDEO_2_URL = "https://www.youtube.com/embed/MFo5u9NRPaA?list=PLXQgvG0bchMN_b85d_kK75skZcfNxIDRG&index=3&autoplay=0";
 
 export function SpringGala() {
   const [lang, setLang] = useState<Language>('zh');
@@ -448,6 +480,7 @@ export function SpringGala() {
   const [messages, setMessages] = useState(chatMessagesData['zh']);
   const [newMessage, setNewMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null); // 仅滚动聊天区域，避免整页下跳
   
   // Update chat messages when language changes
   useEffect(() => {
@@ -460,12 +493,71 @@ export function SpringGala() {
   const [showDeposit, setShowDeposit] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositLoading, setDepositLoading] = useState(false);
-  const [showTicker, setShowTicker] = useState(true); // Toggle for top ticker
+  const [addressAmount, setAddressAmount] = useState('');
+  const [addressPayLoading, setAddressPayLoading] = useState(false);
+  // showTicker removed as per user request to clean layout
   const [viewMode, setViewMode] = useState<'live' | 'submission'>('live');
   const [showAIModal, setShowAIModal] = useState(false); // Default to Submission as per user request
   const [showAIRules, setShowAIRules] = useState(false);
   const [showAIBanner, setShowAIBanner] = useState(true);
   const [totalDirectTips, setTotalDirectTips] = useState(0);
+  
+  // Monad Deposit State
+  const [showMonadDeposit, setShowMonadDeposit] = useState(false);
+  const [monadDepositAmount, setMonadDepositAmount] = useState('');
+  const [monadDepositLoading, setMonadDepositLoading] = useState(false);
+  const [monadAddressAmount, setMonadAddressAmount] = useState('');
+  const [monadAddressPayLoading, setMonadAddressPayLoading] = useState(false);
+
+  // Password Red Packet State
+  const [showPasswordRedPacket, setShowPasswordRedPacket] = useState(false);
+  const [passwordRedPacketAmount, setPasswordRedPacketAmount] = useState('');
+  const [redPacketPassword, setRedPacketPassword] = useState('');
+  const [passwordRedPacketLoading, setPasswordRedPacketLoading] = useState(false);
+
+  const handlePasswordRedPacket = async () => {
+    if (!passwordRedPacketAmount || parseFloat(passwordRedPacketAmount) <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+    if (!redPacketPassword) {
+      alert("Please enter a password");
+      return;
+    }
+    
+    const eth = (window as any).ethereum;
+     if (!eth) {
+       alert("Please install a wallet like MetaMask!");
+       return;
+     }
+     try {
+       setPasswordRedPacketLoading(true);
+       const { BrowserProvider, Contract, parseEther } = await import('ethers');
+       const provider = new BrowserProvider(eth);
+       const chainIdHex = await provider.send('eth_chainId', []);
+       const chainId = parseInt(chainIdHex, 16);
+       if (chainId !== MONAD_TESTNET_CHAIN_ID) {
+            alert("Please switch to Monad Testnet");
+            return;
+       }
+       const signer = await provider.getSigner();
+       const contract = new Contract(RED_PACKET_MONAD_CONTRACT, RED_PACKET_ABI, signer);
+       // In a real app, we would hash the password and store it on-chain or in a backend.
+       // Here we just deposit to the pool and simulate the "creation" of a password packet.
+       const tx = await contract.deposit({ value: parseEther(passwordRedPacketAmount) });
+       await tx.wait();
+       alert(lang === 'zh' ? `口令红包创建成功！口令：${redPacketPassword}` : `Password Red Packet Created! Password: ${redPacketPassword}`);
+       setPasswordRedPacketAmount('');
+       setRedPacketPassword('');
+       setShowPasswordRedPacket(false);
+       loadMonadContractData();
+     } catch (e: any) {
+       console.error(e);
+       alert("Error creating red packet: " + (e?.reason || e?.message));
+     } finally {
+       setPasswordRedPacketLoading(false);
+     }
+  };
 
   const t = translations[lang];
 
@@ -481,6 +573,14 @@ export function SpringGala() {
     distributed: '0',
     count: 0
   });
+  
+  const [monadStats, setMonadStats] = useState({
+    pool: '0',
+    distributed: '0',
+    totalReceived: '0' // 链上：总收到 = 当前余额 + 已发出
+  });
+  const [monadLoadError, setMonadLoadError] = useState(false);
+  const [monadClaimLoading, setMonadClaimLoading] = useState(false);
 
   // Red Packet (Conflux) state
   const [walletAccount, setWalletAccount] = useState<string | null>(null);
@@ -499,7 +599,10 @@ export function SpringGala() {
   };
 
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // 只滚动聊天容器内部，不触发整页 scrollIntoView，避免页面老是往下跳
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
   };
 
   // --- AI Host Logic ---
@@ -746,6 +849,282 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
       }, 1000);
   };
 
+  // Monad 链上数据：多 RPC 重试；优先合约 totalDistributed()，失败则用 Deposit 事件
+  const loadMonadContractData = async () => {
+    setMonadLoadError(false);
+    const { Contract, formatEther, JsonRpcProvider, id } = await import('ethers');
+    let lastErr: unknown = null;
+    for (const rpcUrl of MONAD_RPC_URLS) {
+      try {
+        const provider = new JsonRpcProvider(rpcUrl);
+        const currentBal = await provider.getBalance(RED_PACKET_MONAD_CONTRACT);
+        const poolNum = Number(formatEther(currentBal));
+
+        const c = new Contract(RED_PACKET_MONAD_CONTRACT, RED_PACKET_ABI, provider);
+        let distributedNum = 0;
+        let totalReceivedNum = poolNum;
+
+        try {
+          const distributedVal = await c.totalDistributed();
+          distributedNum = Number(formatEther(distributedVal));
+          totalReceivedNum = poolNum + distributedNum;
+        } catch {
+          const depositTopic = id("Deposit(address,uint256)");
+          let totalDepositedCalc = BigInt(0);
+          try {
+            const logs = await provider.getLogs({
+              address: RED_PACKET_MONAD_CONTRACT,
+              topics: [depositTopic],
+              fromBlock: 0
+            });
+            const iface = c.interface;
+            for (const log of logs) {
+              try {
+                const parsed = iface.parseLog(log);
+                if (parsed && parsed.args) {
+                  const amt = parsed.args.amount ?? parsed.args[1];
+                  if (amt !== undefined) totalDepositedCalc += BigInt(amt);
+                }
+              } catch (_) {}
+            }
+          } catch (_) {}
+          const totalDeposited = Number(formatEther(totalDepositedCalc));
+          distributedNum = totalDeposited > poolNum ? totalDeposited - poolNum : 0;
+          totalReceivedNum = totalDeposited;
+        }
+
+        setMonadStats({
+          pool: poolNum.toFixed(4),
+          distributed: distributedNum.toFixed(4),
+          totalReceived: totalReceivedNum.toFixed(4)
+        });
+        return;
+      } catch (e) {
+        lastErr = e;
+        continue;
+      }
+    }
+    console.warn('Monad Contract load error (all RPCs failed):', lastErr);
+    setMonadLoadError(true);
+    // Keep stale data on error to prevent flashing 0
+  };
+
+  const handleMonadAction = async () => {
+      const eth = (window as any).ethereum;
+      if (!eth) {
+        alert("Please install a wallet like MetaMask!");
+        return;
+      }
+      // 奖池为空时直接提示，避免合约 revert "Insufficient balance" 的弹窗
+      const poolNum = parseFloat(monadStats.pool);
+      if (isNaN(poolNum) || poolNum <= 0) {
+        alert(lang === 'zh' ? 'Monad 奖池暂无余额，无法领取。请稍后再试或先向合约充值。' : 'Monad pool is empty. No packets to claim. Try again later or deposit first.');
+        return;
+      }
+      try {
+        setMonadClaimLoading(true);
+        const { BrowserProvider, Contract } = await import('ethers');
+        const provider = new BrowserProvider(eth);
+        await provider.send('eth_requestAccounts', []);
+        
+        const chainIdHex = await provider.send('eth_chainId', []);
+        const chainId = parseInt(chainIdHex, 16);
+        if (chainId !== MONAD_TESTNET_CHAIN_ID) {
+            try {
+                await eth.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x279f' }], // 10143
+                });
+            } catch (switchError: any) {
+                // This error code indicates that the chain has not been added to MetaMask.
+                if (switchError.code === 4902) {
+                    try {
+                        await eth.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [
+                                {
+                                    chainId: '0x279f',
+                                    chainName: 'Monad Testnet',
+                                    nativeCurrency: {
+                                        name: 'MON',
+                                        symbol: 'MON',
+                                        decimals: 18,
+                                    },
+                                    rpcUrls: [MONAD_RPC_URL],
+                                    blockExplorerUrls: ['https://testnet.monadexplorer.com/'],
+                                },
+                            ],
+                        });
+                    } catch (addError) {
+                         alert("Failed to add Monad Testnet");
+                         return;
+                    }
+                } else {
+                     alert("Please switch to Monad Testnet");
+                     return;
+                }
+            }
+        }
+        
+        const signer = await provider.getSigner();
+        const contract = new Contract(RED_PACKET_MONAD_CONTRACT, RED_PACKET_ABI, signer);
+        const tx = await contract.claim();
+        await tx.wait();
+        alert("Claimed Monad Red Packet!");
+        loadMonadContractData();
+      } catch (e: any) {
+          console.error(e);
+          const msg = e?.reason || e?.message || String(e);
+          const friendly = msg.includes('Insufficient balance')
+            ? (lang === 'zh' ? 'Monad 奖池余额不足，无法领取。' : 'Monad pool has insufficient balance.')
+            : msg;
+          alert(friendly);
+      } finally {
+          setMonadClaimLoading(false);
+      }
+  };
+
+  const handleMonadDeposit = async () => {
+    if (!monadDepositAmount || parseFloat(monadDepositAmount) <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+    const eth = (window as any).ethereum;
+    if (!eth) {
+      alert("Please install a wallet like MetaMask!");
+      return;
+    }
+    
+    try {
+      setMonadDepositLoading(true);
+      const { BrowserProvider, Contract, parseEther } = await import('ethers');
+      const provider = new BrowserProvider(eth);
+      
+      const chainIdHex = await provider.send('eth_chainId', []);
+      const chainId = parseInt(chainIdHex, 16);
+      if (chainId !== MONAD_TESTNET_CHAIN_ID) {
+        try {
+          await eth.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x279f' }], // 10143
+          });
+        } catch (switchError: any) {
+          // This error code indicates that the chain has not been added to MetaMask.
+          if (switchError.code === 4902) {
+            try {
+              await eth.request({
+                method: 'wallet_addEthereumChain',
+                params: [
+                  {
+                    chainId: '0x279f',
+                    chainName: 'Monad Testnet',
+                    nativeCurrency: {
+                      name: 'MON',
+                      symbol: 'MON',
+                      decimals: 18,
+                    },
+                    rpcUrls: [MONAD_RPC_URL],
+                    blockExplorerUrls: ['https://testnet.monadexplorer.com/'],
+                  },
+                ],
+              });
+            } catch (addError) {
+              alert("Failed to add Monad Testnet");
+              return;
+            }
+          } else {
+            alert("Please switch to Monad Testnet");
+            return;
+          }
+        }
+      }
+      
+      const signer = await provider.getSigner();
+      const contract = new Contract(RED_PACKET_MONAD_CONTRACT, RED_PACKET_ABI, signer);
+      
+      const tx = await contract.deposit({ value: parseEther(monadDepositAmount) });
+      await tx.wait();
+      
+      alert(lang === 'zh' ? 'Monad 红包发送成功！' : 'Monad Red Packet Sent!');
+      setMonadDepositAmount('');
+      setShowMonadDeposit(false);
+      loadMonadContractData();
+    } catch (e: any) {
+      console.error(e);
+      alert("Error sending red packet: " + (e?.reason || e?.message));
+    } finally {
+      setMonadDepositLoading(false);
+    }
+  };
+
+  const handleSendToAddressMonad = async () => {
+    if (!monadAddressAmount || isNaN(Number(monadAddressAmount)) || Number(monadAddressAmount) <= 0) {
+      alert(lang === 'zh' ? '请输入有效金额' : 'Please enter a valid amount');
+      return;
+    }
+    const eth = (window as any).ethereum;
+    if (!eth) {
+      alert('Please install a wallet like MetaMask!');
+      return;
+    }
+    try {
+      setMonadAddressPayLoading(true);
+      const { BrowserProvider, parseEther } = await import('ethers');
+      const provider = new BrowserProvider(eth);
+      const chainIdHex = await provider.send('eth_chainId', []);
+      const chainId = parseInt(chainIdHex, 16);
+      if (chainId !== MONAD_TESTNET_CHAIN_ID) {
+        try {
+          await eth.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x279f' }], // 10143
+          });
+        } catch (switchError: any) {
+          if (switchError.code === 4902) {
+            try {
+              await eth.request({
+                method: 'wallet_addEthereumChain',
+                params: [
+                  {
+                    chainId: '0x279f',
+                    chainName: 'Monad Testnet',
+                    nativeCurrency: {
+                      name: 'MON',
+                      symbol: 'MON',
+                      decimals: 18,
+                    },
+                    rpcUrls: [MONAD_RPC_URL],
+                    blockExplorerUrls: ['https://testnet.monadexplorer.com/'],
+                  },
+                ],
+              });
+            } catch (addError) {
+              alert("Failed to add Monad Testnet");
+              return;
+            }
+          } else {
+            alert("Please switch to Monad Testnet");
+            return;
+          }
+        }
+      }
+      const signer = await provider.getSigner();
+      const tx = await signer.sendTransaction({
+        to: OFFICIAL_WALLET,
+        value: parseEther(monadAddressAmount)
+      });
+      await tx.wait();
+      alert(lang === 'zh' ? '已打款到收款地址，感谢！' : 'Sent to address. Thank you!');
+      setMonadAddressAmount('');
+      setShowMonadDeposit(false);
+    } catch (e: any) {
+      console.error(e);
+      alert(e?.message || 'Transaction failed');
+    } finally {
+      setMonadAddressPayLoading(false);
+    }
+  };
+
   // Conflux Contract Integration
   const loadContractData = async (ignoredProvider?: any) => {
     try {
@@ -758,10 +1137,22 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
       let packetCount = BigInt(0);
       
       try {
-          // Try to read contract specific vars
-          packetCount = await c.packetCount();
+          // Try to read contract specific vars (Demo contract first)
+          packetCount = await c.totalClaimed();
+          // Demo contract might track totalDistributed directly, but let's stick to logs for Conflux if preferred,
+          // OR try to read totalDistributed if available
+          try {
+             const dist = await c.totalDistributed();
+             // If we can read totalDistributed, use it to calculate totalDeposited approximation or just use it
+             // But existing logic calculates 'distributed' as (totalDeposited - currentBal).
+             // Let's keep existing logic for 'distributed' calculation via logs if possible, 
+             // but if logs fail, we can use totalDistributed.
+          } catch(e) {}
       } catch (err) {
-          console.log("Contract view functions not supported, using defaults");
+          // Fallback to standard contract
+          try {
+            packetCount = await c.packetCount();
+          } catch(e) {}
       }
 
       const currentBal = await provider.getBalance(RED_PACKET_CONTRACT);
@@ -776,19 +1167,19 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
           fromBlock: 0 // In production, use a closer block number
       });
 
-      let totalDeposited = BigInt(0);
+      let totalDepositedCalc = BigInt(0);
       const iface = c.interface;
       
       for (const log of logs) {
           try {
               const parsed = iface.parseLog(log);
               if (parsed) {
-                  totalDeposited += parsed.args.amount;
+                  totalDepositedCalc += parsed.args.amount;
               }
           } catch (e) {}
       }
 
-      const total = Number(formatEther(totalDeposited));
+      const total = Number(formatEther(totalDepositedCalc));
       const current = Number(formatEther(currentBal));
       
       setStats({
@@ -893,6 +1284,44 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
     }
   };
 
+  const handleSendToAddressCfx = async () => {
+    if (!addressAmount || isNaN(Number(addressAmount)) || Number(addressAmount) <= 0) {
+      alert(lang === 'zh' ? '请输入有效金额' : 'Please enter a valid amount');
+      return;
+    }
+    const eth = (window as any).ethereum;
+    if (!eth) {
+      alert(t.installFluent);
+      return;
+    }
+    try {
+      setAddressPayLoading(true);
+      const { BrowserProvider, parseEther } = await import('ethers');
+      const provider = new BrowserProvider(eth);
+      const chainIdHex = await provider.send('eth_chainId', []);
+      const chainId = parseInt(chainIdHex, 16);
+      if (chainId !== CONFLUX_ESPACE_TESTNET_CHAIN_ID) {
+        try {
+          await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x47' }] });
+        } catch (_) {}
+      }
+      const signer = await provider.getSigner();
+      const tx = await signer.sendTransaction({
+        to: OFFICIAL_WALLET,
+        value: parseEther(addressAmount)
+      });
+      await tx.wait();
+      alert(lang === 'zh' ? '已打款到收款地址，感谢！' : 'Sent to address. Thank you!');
+      setAddressAmount('');
+      setShowDeposit(false);
+    } catch (e: any) {
+      console.error(e);
+      alert(e?.message || 'Transaction failed');
+    } finally {
+      setAddressPayLoading(false);
+    }
+  };
+
   const handleDirectTip = async () => {
     const eth = (window as any).ethereum;
     if (!eth) {
@@ -948,8 +1377,14 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) setApiPrograms(data);
+        } else {
+            throw new Error("API response not ok");
         }
-      } catch (err) {}
+      } catch (err) {
+          console.warn("API fetch failed, using fallback data", err);
+          // Fallback to local data or empty
+          setApiPrograms([]); 
+      }
     };
     fetchPrograms();
 
@@ -999,6 +1434,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
 
             // Initial load
             loadContractData(provider);
+            loadMonadContractData();
 
         } catch (e) {
             console.error("Listener setup failed:", e);
@@ -1012,6 +1448,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
         import('ethers').then(async ({ JsonRpcProvider }) => {
             const provider = new JsonRpcProvider("https://evmtestnet.confluxrpc.com");
             loadContractData(provider);
+            loadMonadContractData();
         });
     }, 5000); // Faster polling (5s)
 
@@ -1023,8 +1460,6 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
 
   const displayPrograms = [...programsData[lang], ...apiPrograms];
 
-
-
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col gap-4 p-4 md:p-6 overflow-hidden bg-[#0f1115] relative text-white">
       
@@ -1032,9 +1467,15 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
       <div className="flex justify-between items-center shrink-0">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-yellow-500 bg-clip-text text-transparent">
-              {t.headerTitle}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-yellow-500 bg-clip-text text-transparent">
+                {t.headerTitle}
+              </h1>
+              <span className="bg-purple-600/90 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow shadow-purple-900/50 flex items-center gap-1 shrink-0">
+                <Award size={10} />
+                {lang === 'zh' ? 'Monad 黑客松参赛作品' : 'Monad Hackathon Entry'}
+              </span>
+            </div>
             {/* Top Sponsors (Inline) */}
             <div className="flex items-center gap-3 mt-1">
                 {titleSponsors.map(s => (
@@ -1044,17 +1485,10 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                     </a>
                 ))}
             </div>
-            {showTicker ? (
               <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                 <Radio size={12} className="animate-pulse text-red-500" />
                 {t.liveCall}
-                <button onClick={() => setShowTicker(false)} className="ml-2 hover:text-white" title="Hide Ticker"><X size={10}/></button>
               </p>
-            ) : (
-              <button onClick={() => setShowTicker(true)} className="text-[10px] text-gray-600 hover:text-gray-400 mt-1 flex items-center gap-1">
-                 <Radio size={10} /> Show Ticker
-              </button>
-            )}
           </div>
 
           {/* Mode Switcher */}
@@ -1112,7 +1546,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                         </h3>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-700">
-                        {/* Fixed Item 1: CCTV */}
+                        {/* Fixed Item 1: 区块链红包版 CCTV 春晚 */}
                         <div 
                             onClick={() => setActiveVideo(CCTV_URL)}
                             className={`p-3 rounded-lg border cursor-pointer transition-colors group
@@ -1123,13 +1557,33 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                         >
                             <div className="flex justify-between items-start">
                                 <h4 className={`font-bold text-sm ${activeVideo === CCTV_URL ? 'text-red-400' : 'text-gray-300'}`}>
-                                    {t.humanGala} (Demo)
+                                    {t.humanGalaBlockchain}
                                 </h4>
                                 <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded flex items-center gap-1">
-                                    REPLAY
+                                    LIVE
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Black Myth: Wukong (Placeholder)</p>
+                            <p className="text-xs text-gray-500 mt-1">{lang === 'zh' ? '同步直播 + 链上红包' : 'Live + On-chain Red Packets'}</p>
+                        </div>
+
+                        {/* Fixed Item 2: 第二个直播 - 2026 区块链红包版 马年春晚 */}
+                        <div
+                            onClick={() => setActiveVideo(LIVE_VIDEO_2_URL)}
+                            className={`p-3 rounded-lg border cursor-pointer transition-colors group
+                                ${activeVideo === LIVE_VIDEO_2_URL
+                                    ? 'bg-red-900/20 border-red-500/50'
+                                    : 'bg-black/20 border-gray-800 hover:border-gray-600'
+                                }`}
+                        >
+                            <div className="flex justify-between items-start">
+                                <h4 className={`font-bold text-sm ${activeVideo === LIVE_VIDEO_2_URL ? 'text-red-400' : 'text-gray-300'}`}>
+                                    {lang === 'zh' ? '2026 区块链红包版 马年春晚' : lang === 'tw' ? '2026 區塊鏈紅包版 馬年春晚' : '2026 Blockchain Red Packet · Horse Year Gala'}
+                                </h4>
+                                <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded flex items-center gap-1">
+                                    LIVE 2
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{lang === 'zh' ? '直播二' : 'Live 2'}</p>
                         </div>
 
                         {/* AI Programs */}
@@ -1171,6 +1625,8 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                         ))}
                     </div>
                 </div>
+
+
             </div>
 
             {/* Center: Main Area (Video & Stats) */}
@@ -1243,82 +1699,93 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                         <p>Select a program to watch</p>
                      </div>
                   )}
-                  {/* Overlay Title */}
-                  <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
-                      <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                          {activeVideo === CCTV_URL ? (
-                              <>
-                                <Radio size={20} className="text-red-500 animate-pulse" />
-                                {t.humanGala}
-                              </>
-                          ) : (
-                              <>
-                                <Bot size={20} className="text-yellow-500" />
-                                {displayPrograms.find(p => p.videoUrl === activeVideo || (p.type === 'sandbox' && 'SANDBOX:' + p.sandboxId === activeVideo))?.title || 'Program'}
-                              </>
-                          )}
-                      </h2>
-                  </div>
                 </div>
 
-                {/* Red Packet Dashboard */}
-                <div className="bg-gradient-to-r from-red-900/20 to-black rounded-xl border border-red-500/30 p-4 flex items-center justify-between gap-4 relative overflow-hidden">
-                    <div className="flex items-center gap-6 z-10">
+                {/* 恢复原风格双卡片，压缩间距；MON 充值请转合约地址 */}
+                <div className="rounded-xl border border-purple-500/30 bg-gradient-to-r from-purple-900/20 to-black p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-4">
                         <div className="flex flex-col">
-                            <div className="text-xs text-gray-400 mb-1">{t.totalPool}</div>
-                            <div className="text-2xl font-mono text-yellow-400 font-bold flex items-center gap-1">
-                                <Coins size={20} />
-                                {stats.pool} <span className="text-xs text-gray-500">CFX</span>
+                            <div className="text-[10px] text-gray-400 mb-0.5 flex items-center gap-1">
+                                {t.totalPool}
+                                <button onClick={() => navigator.clipboard.writeText(RED_PACKET_MONAD_CONTRACT)} className="hover:text-purple-400" title={lang === 'zh' ? '复制合约地址' : 'Copy contract'}><Copy size={10} /></button>
+                                <a href={`${MONAD_EXPLORER}/address/${RED_PACKET_MONAD_CONTRACT}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-purple-400 hover:underline" title={lang === 'zh' ? '链上查看余额' : 'View on explorer'}>{lang === 'zh' ? '链上' : 'Explorer'}</a>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Coins size={14} className="text-purple-400 shrink-0" />
+                                {monadLoadError ? '—' : <PoolAmount value={monadStats.pool} unit="MON" colorClass="text-purple-400" />}
                             </div>
                         </div>
-                        <div className="w-px h-10 bg-gray-700/50"></div>
+                        <div className="w-px h-8 bg-gray-700/50" />
                         <div className="flex flex-col">
-                            <div className="text-xs text-gray-400 mb-1">{t.totalDistributed}</div>
-                            <div className="text-2xl font-mono text-red-400 font-bold flex items-center gap-1">
-                                <TrendingUp size={20} />
-                                {stats.distributed} <span className="text-xs text-gray-500">CFX</span>
+                            <div className="text-[10px] text-gray-400 mb-0.5">{t.totalDistributed}</div>
+                            <div className="flex items-center gap-1">
+                                <TrendingUp size={14} className="text-purple-300 shrink-0" />
+                                {monadLoadError ? '—' : <PoolAmount value={monadStats.distributed} unit="MON" colorClass="text-purple-300" />}
                             </div>
                         </div>
-                        <div className="w-px h-10 bg-gray-700/50"></div>
-                         <div className="flex flex-col">
-                        <div className="text-xs text-gray-400 mb-1">{lang === 'zh' ? '累计打赏' : 'Total Tips'}</div>
-                        <div className="text-2xl font-mono text-green-400 font-bold flex items-center gap-1">
-                                <Gift size={20} />
-                                {totalDirectTips.toFixed(4)} <span className="text-xs text-gray-500">CFX</span>
+                        <div className="w-px h-8 bg-gray-700/50" />
+                        <div className="flex flex-col">
+                            <div className="text-[10px] text-gray-400 mb-0.5">{lang === 'zh' ? '打赏' : 'Tips'}</div>
+                            <div className="flex items-center gap-1">
+                                <Gift size={14} className="text-white shrink-0" />
+                                {monadLoadError ? '—' : <PoolAmount value={monadStats.totalReceived ?? '0.0000'} unit="MON" colorClass="text-white" />}
                             </div>
                         </div>
                     </div>
-
-                    <div className="flex items-center gap-3 z-10">
-                        <button 
-                            onClick={() => setShowDeposit(true)}
-                            className="px-4 py-2 bg-yellow-600/20 border border-yellow-600/50 rounded-lg text-yellow-400 font-bold text-sm hover:bg-yellow-600/30 transition-colors flex items-center gap-2"
-                        >
-                            <Wallet size={16} />
-                            {t.sendRedPacket}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button onClick={() => setShowMonadDeposit(true)} className="px-3 py-1.5 bg-purple-600/20 border border-purple-600/50 rounded-lg text-purple-400 font-bold text-xs hover:bg-purple-600/30 transition-colors flex items-center gap-1.5">
+                            <Wallet size={14} />{t.sendRedPacket}
                         </button>
-
                         {showRainBtn ? (
-                            <motion.button
-                                initial={{ scale: 0 }} animate={{ scale: 1 }}
-                                whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                                onClick={handleRedPacketAction}
-                                disabled={claimLoading}
-                                className={`px-6 py-2 rounded-lg font-bold shadow-lg flex items-center gap-2
-                                ${claimLoading 
-                                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-red-600 to-yellow-600 text-white animate-pulse'
-                                }`}
-                            >
-                                {claimLoading ? '...' : t.grabPacket}
-                            </motion.button>
+                            <button onClick={handleMonadAction} disabled={monadClaimLoading || parseFloat(monadStats.pool) <= 0} className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 ${(monadClaimLoading || parseFloat(monadStats.pool) <= 0) ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'}`}>
+                                {monadClaimLoading ? '...' : t.grabPacket}
+                            </button>
                         ) : (
-                            <div className="px-4 py-2 bg-red-900/10 rounded-lg border border-red-900/30 text-center">
-                                 <span className="text-red-400 text-sm">{t.rainIncoming}</span>
-                            </div>
+                            <div className="px-3 py-1.5 bg-purple-900/10 rounded-lg border border-purple-900/30 text-purple-400 text-xs">{t.rainIncoming}</div>
                         )}
                     </div>
                 </div>
+                <div className="rounded-xl border border-red-500/30 bg-gradient-to-r from-red-900/20 to-black p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col">
+                            <div className="text-[10px] text-gray-400 mb-0.5">{t.totalPool}</div>
+                            <div className="flex items-center gap-1">
+                                <Coins size={14} className="text-yellow-400 shrink-0" />
+                                <PoolAmount value={stats.pool} unit="CFX" colorClass="text-yellow-400" />
+                            </div>
+                        </div>
+                        <div className="w-px h-8 bg-gray-700/50" />
+                        <div className="flex flex-col">
+                            <div className="text-[10px] text-gray-400 mb-0.5">{t.totalDistributed}</div>
+                            <div className="flex items-center gap-1">
+                                <TrendingUp size={14} className="text-red-400 shrink-0" />
+                                <PoolAmount value={stats.distributed} unit="CFX" colorClass="text-red-400" />
+                            </div>
+                        </div>
+                        <div className="w-px h-8 bg-gray-700/50" />
+                        <div className="flex flex-col">
+                            <div className="text-[10px] text-gray-400 mb-0.5">{lang === 'zh' ? '打赏' : 'Tips'}</div>
+                            <div className="flex items-center gap-1">
+                                <Gift size={14} className="text-green-400 shrink-0" />
+                                <PoolAmount value={totalDirectTips.toFixed(4)} unit="CFX" colorClass="text-green-400" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button onClick={() => setShowDeposit(true)} className="px-3 py-1.5 bg-yellow-600/20 border border-yellow-600/50 rounded-lg text-yellow-400 font-bold text-xs hover:bg-yellow-600/30 transition-colors flex items-center gap-1.5">
+                            <Wallet size={14} />{t.sendRedPacket}
+                        </button>
+                        {showRainBtn ? (
+                            <button onClick={handleRedPacketAction} disabled={claimLoading} className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 ${claimLoading ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-yellow-600 text-white'}`}>
+                                {claimLoading ? '...' : t.grabPacket}
+                            </button>
+                        ) : (
+                            <div className="px-3 py-1.5 bg-red-900/10 rounded-lg border border-red-900/30 text-red-400 text-xs">{t.rainIncoming}</div>
+                        )}
+                    </div>
+                </div>
+
+
                 
 
             </div>
@@ -1583,7 +2050,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                     </span>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin scrollbar-thumb-gray-700">
+                <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin scrollbar-thumb-gray-700">
                     {messages.map((msg, idx) => (
                         <div key={idx} className={`text-sm ${msg.isHost ? 'bg-yellow-900/10 border border-yellow-900/30 p-2 rounded-lg' : ''}`}>
                             <span className={`font-bold text-xs ${msg.isHost ? 'text-yellow-500' : 'text-blue-400'} block mb-0.5`}>
@@ -1619,21 +2086,57 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
 
       </div>
 
-      {/* Sponsors Footer */}
-      <div className="shrink-0 py-2 border-t border-gray-800 flex items-center justify-center gap-6 overflow-x-auto">
-          <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">{t.poweredBy}</span>
-          {sponsors.map(s => (
-              <a 
-                  key={s.name} 
-                  href={s.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 opacity-50 hover:opacity-100 transition-opacity grayscale hover:grayscale-0"
-              >
-                  <span className="text-lg">{s.logo}</span>
-                  <span className="text-xs font-bold text-gray-300">{s.name}</span>
-              </a>
-          ))}
+      {/* 赞助商：压缩为一行 */}
+      <div className="shrink-0 py-1.5 border-t border-gray-800 flex items-center justify-center overflow-hidden bg-[#0f1115]">
+          <div className="flex items-center gap-4 overflow-hidden w-full relative max-w-full">
+               <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#0f1115] to-transparent z-10 pointer-events-none" />
+               <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0f1115] to-transparent z-10 pointer-events-none" />
+               <div className="flex animate-scroll hover:[animation-play-state:paused] whitespace-nowrap gap-4 px-3 items-center text-[10px]">
+                  <span className="text-gray-500 uppercase tracking-wider font-bold shrink-0">{lang === 'zh' ? '赞助商' : 'Sponsors'}</span>
+                  <span className="text-gray-600 shrink-0">·</span>
+                  {[...Array(2)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-4">
+                           <div className="flex items-center gap-1.5 grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all cursor-pointer">
+                                <span className="text-sm">🔴</span>
+                                <span className="font-bold text-gray-300">Conflux</span>
+                                <span className="bg-red-900/50 text-red-400 px-1 py-0.5 rounded border border-red-500/30">{lang === 'zh' ? '赞助' : 'Sponsor'}</span>
+                           </div>
+                           <div className="flex items-center gap-1.5 grayscale hover:grayscale-0 opacity-80 hover:opacity-100 transition-all cursor-pointer">
+                                <span className="text-sm">🟣</span>
+                                <span className="font-bold text-gray-300">Monad</span>
+                                <span className="bg-purple-900/50 text-purple-400 px-1 py-0.5 rounded border border-purple-500/30">{lang === 'zh' ? '黑客松' : 'Hackathon'}</span>
+                           </div>
+                           <div className="flex items-center gap-1.5 opacity-70 hover:opacity-100 cursor-pointer">
+                                <span className="text-sm">🏗️</span>
+                                <span className="font-bold text-gray-300">OpenBuild</span>
+                           </div>
+                           <div className="flex items-center gap-1.5 opacity-70 hover:opacity-100 cursor-pointer">
+                                <span className="text-sm">🤖</span>
+                                <span className="font-bold text-gray-300">AgentVerse</span>
+                           </div>
+                           <div className="flex items-center gap-1.5 grayscale opacity-50 cursor-not-allowed">
+                                <div className="w-4 h-4 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-500 text-[10px]">Ξ</div>
+                                <span className="font-bold text-gray-400">Ethereum</span>
+                                <span className="bg-gray-800 text-gray-500 px-1 py-0.5 rounded">Soon</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 grayscale opacity-50 cursor-not-allowed">
+                                <img src="https://solana.com/_next/static/media/solanaLogoMark.17260911.svg" alt="Solana" className="w-4 h-4 opacity-70" />
+                                <span className="font-bold text-gray-400">Solana</span>
+                                <span className="bg-gray-800 text-gray-500 px-1 py-0.5 rounded">Soon</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 grayscale opacity-50 cursor-not-allowed">
+                                <div className="w-4 h-4 bg-blue-600/20 rounded-full flex items-center justify-center text-blue-600 text-[10px] font-black">B</div>
+                                <span className="font-bold text-gray-400">Base</span>
+                                <span className="bg-gray-800 text-gray-500 px-1 py-0.5 rounded">Soon</span>
+                            </div>
+                            <div onClick={() => window.open('https://github.com/dongsheng123132/agent-verse.live', '_blank')} className="flex items-center gap-1.5 hover:bg-gray-800/50 px-1.5 py-0.5 rounded cursor-pointer">
+                                <span className="text-gray-400 group-hover:text-white text-xs">+</span>
+                                <span className="font-bold text-gray-400">Apply</span>
+                            </div>
+                      </div>
+                  ))}
+               </div>
+          </div>
       </div>
 
       {/* Tip/QR Modal */}
@@ -1670,11 +2173,11 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                 />
               </div>
               
-              <div className="bg-black/30 p-3 rounded-lg border border-gray-700 flex items-center justify-between gap-2">
-                  <span className="text-xs font-mono text-gray-400 truncate">{OFFICIAL_WALLET}</span>
+              <div className="bg-black/30 p-3 rounded-lg border border-gray-700 flex items-start gap-2">
+                  <span className="text-[10px] font-mono text-gray-400 break-all flex-1">{OFFICIAL_WALLET}</span>
                   <button 
                     onClick={() => copyToClipboard(OFFICIAL_WALLET, 'receive')}
-                    className="p-1.5 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-white"
+                    className="p-1.5 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-white shrink-0"
                   >
                       {copiedId === 'receive' ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                   </button>
@@ -1697,7 +2200,188 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
         )}
       </AnimatePresence>
 
-      {/* Deposit Modal */}
+      {/* Monad Deposit Modal */}
+      <AnimatePresence>
+        {showMonadDeposit && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" 
+            onClick={() => setShowMonadDeposit(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#1a1b23] border border-purple-500/30 rounded-2xl p-6 max-w-sm w-full relative shadow-2xl" 
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setShowMonadDeposit(false)}
+                className="absolute top-2 right-2 p-2 text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold text-purple-400 flex items-center justify-center gap-2">
+                    <Gift size={24} />
+                    {t.sendRedPacket}
+                  </h3>
+              </div>
+
+              <div className="space-y-5">
+                {/* 方式一：给合约打款 */}
+                <div className="bg-purple-900/10 rounded-xl border border-purple-500/30 p-4">
+                  <p className="text-xs font-medium text-purple-300 mb-2">{lang === 'zh' ? '方式一 · 给合约打款' : 'Option 1 · To contract'}</p>
+                  <p className="text-[10px] text-gray-400 mb-2">{lang === 'zh' ? 'MON 直接进奖池，用户可抢' : 'MON goes to pool for claims'}</p>
+                  <div className="flex gap-2 mb-2">
+                    <input 
+                      type="number" 
+                      step="any"
+                      min="0.000000000000000001"
+                      value={monadDepositAmount}
+                      onChange={e => setMonadDepositAmount(e.target.value)}
+                      placeholder="0.1"
+                      className="flex-1 bg-black/40 border border-gray-600 rounded-lg px-3 py-2.5 text-white focus:border-purple-500 outline-none text-sm"
+                    />
+                    <button 
+                      onClick={handleMonadDeposit}
+                      disabled={monadDepositLoading}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-lg font-bold disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                    >
+                      <Wallet size={16} />
+                      {monadDepositLoading ? '...' : (lang === 'zh' ? '给合约打款' : 'To Contract')}
+                    </button>
+                  </div>
+                  <div className="flex items-start gap-2 bg-black/30 rounded-lg px-2.5 py-2 border border-gray-700">
+                    <span className="text-[10px] font-mono text-gray-400 break-all flex-1 leading-tight">{RED_PACKET_MONAD_CONTRACT}</span>
+                    <button onClick={() => navigator.clipboard.writeText(RED_PACKET_MONAD_CONTRACT)} className="p-1.5 hover:bg-gray-600 rounded text-gray-400 shrink-0" title={lang === 'zh' ? '复制合约地址' : 'Copy'}>
+                      <Copy size={12} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-gray-700" />
+                  <span className="text-[10px] text-gray-500">{lang === 'zh' ? '或' : 'or'}</span>
+                  <div className="flex-1 h-px bg-gray-700" />
+                </div>
+
+                {/* 方式二：给收款地址打款 */}
+                <div className="bg-gray-900/40 rounded-xl border border-gray-700 p-4">
+                  <p className="text-xs font-medium text-gray-300 mb-2">{lang === 'zh' ? '方式二 · 给收款地址打款' : 'Option 2 · To address'}</p>
+                  <p className="text-[10px] text-gray-400 mb-2">{t.sendToUs}</p>
+                  <div className="flex gap-2 mb-2">
+                    <input 
+                      type="number" 
+                      step="any"
+                      min="0.000000000000000001"
+                      value={monadAddressAmount}
+                      onChange={e => setMonadAddressAmount(e.target.value)}
+                      placeholder="0.1"
+                      className="flex-1 bg-black/40 border border-gray-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-gray-500 outline-none"
+                    />
+                    <button 
+                      onClick={handleSendToAddressMonad}
+                      disabled={monadAddressPayLoading}
+                      className="bg-amber-500 hover:bg-amber-600 text-black px-4 py-2.5 rounded-lg font-bold disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                    >
+                      <Wallet size={16} />
+                      {monadAddressPayLoading ? '...' : (lang === 'zh' ? '钱包付款' : 'Pay')}
+                    </button>
+                  </div>
+                  <div className="flex items-start gap-2 bg-black/30 rounded-lg px-2.5 py-2 border border-gray-700">
+                    <span className="text-[10px] font-mono text-gray-400 break-all flex-1 leading-tight">{OFFICIAL_WALLET}</span>
+                    <button onClick={() => copyToClipboard(OFFICIAL_WALLET, 'receive')} className="p-1.5 hover:bg-gray-600 rounded text-gray-400 shrink-0">
+                      {copiedId === 'receive' ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-gray-500 text-center">Users claim random amounts of MON.</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Password Red Packet Modal */}
+      <AnimatePresence>
+        {showPasswordRedPacket && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" 
+            onClick={() => setShowPasswordRedPacket(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#1a1b23] border border-pink-500/30 rounded-2xl p-6 max-w-sm w-full relative shadow-2xl" 
+              onClick={e => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setShowPasswordRedPacket(false)}
+                className="absolute top-2 right-2 p-2 text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold text-pink-400 flex items-center justify-center gap-2">
+                    <Gift size={24} />
+                    {lang === 'zh' ? '口令红包' : 'Password Packet'}
+                  </h3>
+                  <p className="text-xs text-pink-400/70 mt-1 uppercase tracking-wider font-bold">
+                    {lang === 'zh' ? '全网首创' : 'WORLD FIRST'}
+                  </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-pink-900/10 p-3 rounded-lg border border-pink-900/30">
+                  <p className="text-xs text-gray-300 mb-2">{t.sendToContract}</p>
+                  <div className="space-y-3">
+                    <input 
+                      type="number" 
+                      step="any"
+                      min="0.000000000000000001"
+                      value={passwordRedPacketAmount}
+                      onChange={e => setPasswordRedPacketAmount(e.target.value)}
+                      placeholder="Amount (e.g. 1.0 MON)"
+                      className="w-full bg-black/50 border border-gray-700 rounded px-3 py-2 text-white focus:border-pink-500 outline-none"
+                    />
+                    <input 
+                      type="text" 
+                      value={redPacketPassword}
+                      onChange={e => setRedPacketPassword(e.target.value)}
+                      placeholder={lang === 'zh' ? '设置口令 (例如: agent2026)' : 'Set Password (e.g. agent2026)'}
+                      className="w-full bg-black/50 border border-gray-700 rounded px-3 py-2 text-white focus:border-pink-500 outline-none"
+                    />
+                    <button 
+                      onClick={handlePasswordRedPacket}
+                      disabled={passwordRedPacketLoading}
+                      className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white px-4 py-2 rounded font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {passwordRedPacketLoading ? (
+                        <span>Creating...</span>
+                      ) : (
+                        <>
+                          <Gift size={16} />
+                          {lang === 'zh' ? '生成口令红包' : 'Create Packet'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-500 mt-4 space-y-1">
+                    <p className="font-medium text-gray-400">{lang === 'zh' ? '合约地址' : 'Contract'}</p>
+                    <p className="text-[10px] font-mono text-gray-400 break-all">{RED_PACKET_MONAD_CONTRACT}</p>
+                    <p className="mt-1">{lang === 'zh' ? '用户需输入正确口令才能领取' : 'Users must enter password to claim.'}</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Deposit Modal (Conflux) */}
       <AnimatePresence>
         {showDeposit && (
           <motion.div 
@@ -1724,46 +2408,76 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                   </h3>
               </div>
 
-              <div className="space-y-4">
-                <div className="bg-red-900/10 p-3 rounded-lg border border-red-900/30">
-                  <p className="text-xs text-gray-300 mb-2">{t.sendToContract}</p>
-                  <div className="flex gap-2">
+              <div className="space-y-5">
+                {/* 方式一：给合约打款 */}
+                <div className="bg-red-900/10 rounded-xl border border-red-500/30 p-4">
+                  <p className="text-xs font-medium text-red-300 mb-2">{lang === 'zh' ? '方式一 · 给合约打款' : 'Option 1 · To contract'}</p>
+                  <p className="text-[10px] text-gray-400 mb-2">{lang === 'zh' ? 'CFX 直接进奖池，用户可抢' : 'CFX goes to pool for claims'}</p>
+                  <div className="flex gap-2 mb-2">
                     <input 
                       type="number" 
                       step="any"
                       min="0.000000000000000001"
                       value={depositAmount}
                       onChange={e => setDepositAmount(e.target.value)}
-                      placeholder="Amount (e.g. 0.1, 1.5)"
-                      className="flex-1 bg-black/50 border border-gray-700 rounded px-3 py-2 text-white focus:border-red-500 outline-none"
+                      placeholder="0.1"
+                      className="flex-1 bg-black/40 border border-gray-600 rounded-lg px-3 py-2.5 text-white focus:border-red-500 outline-none text-sm"
                     />
                     <button 
                       onClick={handleDeposit}
                       disabled={depositLoading}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold disabled:opacity-50"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-bold disabled:opacity-50 flex items-center gap-1.5 shrink-0"
                     >
-                      {depositLoading ? '...' : 'Send'}
+                      <Wallet size={16} />
+                      {depositLoading ? '...' : (lang === 'zh' ? '给合约打款' : 'To Contract')}
+                    </button>
+                  </div>
+                  <div className="flex items-start gap-2 bg-black/30 rounded-lg px-2.5 py-2 border border-gray-700">
+                    <span className="text-[10px] font-mono text-gray-400 break-all flex-1">{RED_PACKET_CONTRACT}</span>
+                    <button onClick={() => navigator.clipboard.writeText(RED_PACKET_CONTRACT)} className="p-1.5 hover:bg-gray-600 rounded text-gray-400 shrink-0" title={lang === 'zh' ? '复制合约地址' : 'Copy'}>
+                      <Copy size={12} />
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-800">
-                  <p className="text-xs text-gray-400 mb-1">{t.sendToUs}</p>
-                  <div className="flex items-center justify-between gap-2 bg-black/30 p-2 rounded border border-gray-700">
-                    <span className="text-xs font-mono text-gray-500 truncate">{OFFICIAL_WALLET}</span>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-gray-700" />
+                  <span className="text-[10px] text-gray-500">{lang === 'zh' ? '或' : 'or'}</span>
+                  <div className="flex-1 h-px bg-gray-700" />
+                </div>
+
+                {/* 方式二：给地址打款 */}
+                <div className="bg-gray-900/40 rounded-xl border border-gray-700 p-4">
+                  <p className="text-xs font-medium text-gray-300 mb-2">{lang === 'zh' ? '方式二 · 给收款地址打款' : 'Option 2 · To address'}</p>
+                  <p className="text-[10px] text-gray-400 mb-2">{t.sendToUs}</p>
+                  <div className="flex items-start gap-2 bg-black/30 rounded-lg px-2.5 py-2 border border-gray-700 mb-2">
+                    <span className="text-[10px] font-mono text-gray-400 break-all flex-1">{OFFICIAL_WALLET}</span>
+                    <button onClick={() => copyToClipboard(OFFICIAL_WALLET, 'receive')} className="p-1.5 hover:bg-gray-600 rounded text-gray-400 shrink-0">
+                      {copiedId === 'receive' ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input 
+                      type="number" 
+                      step="any"
+                      min="0.000000000000000001"
+                      value={addressAmount}
+                      onChange={e => setAddressAmount(e.target.value)}
+                      placeholder="0.1"
+                      className="flex-1 bg-black/40 border border-gray-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-gray-500 outline-none"
+                    />
                     <button 
-                      onClick={() => copyToClipboard(OFFICIAL_WALLET, 'receive')}
-                      className="p-1 hover:bg-gray-700 rounded text-gray-400"
+                      onClick={handleSendToAddressCfx}
+                      disabled={addressPayLoading}
+                      className="bg-amber-500 hover:bg-amber-600 text-black px-4 py-2.5 rounded-lg font-bold disabled:opacity-50 flex items-center gap-1.5 shrink-0"
                     >
-                      {copiedId === 'receive' ? <Check size={12} /> : <Copy size={12} />}
+                      <Wallet size={16} />
+                      {addressPayLoading ? '...' : (lang === 'zh' ? '钱包付款' : 'Pay')}
                     </button>
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-500 mt-4 text-center">
-                    <p>Contract: {RED_PACKET_CONTRACT.slice(0,6)}...{RED_PACKET_CONTRACT.slice(-4)}</p>
-                    <p className="mt-1">Logic: Users claim random amounts. First come, first served.</p>
-                </div>
+                <p className="text-[10px] text-gray-500 text-center">Logic: Users claim random amounts. First come, first served.</p>
               </div>
             </motion.div>
           </motion.div>

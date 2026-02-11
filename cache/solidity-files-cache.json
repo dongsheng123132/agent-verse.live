@@ -105,6 +105,111 @@
       "artifacts": [
         "RedPacketRandomDemo"
       ]
+    },
+    "/Users/dosen8618607105700/Downloads/agentverse-live/contracts/RedPacketWithPassphrase.sol": {
+      "lastModificationDate": 1770601464880,
+      "contentHash": "82b96cabbbd22da613a7373bce996eca",
+      "sourceName": "contracts/RedPacketWithPassphrase.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "RedPacketWithPassphrase"
+      ]
+    },
+    "/Users/dosen8618607105700/Downloads/agentverse-live/contracts/monad/RedPacketDemoMonad.sol": {
+      "lastModificationDate": 1770734397443,
+      "contentHash": "9e141d9c0e721d335db24e9a3843fefa",
+      "sourceName": "contracts/monad/RedPacketDemoMonad.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "RedPacketDemoMonad"
+      ]
+    },
+    "/Users/dosen8618607105700/Downloads/agentverse-live/contracts/monad/RedPacketMonad.sol": {
+      "lastModificationDate": 1770731770733,
+      "contentHash": "42d66450325c290d9e2a853ab3b392ae",
+      "sourceName": "contracts/monad/RedPacketMonad.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "RedPacketMonad"
+      ]
     }
   }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Navigation } from './components/Navigation';
 import { Hero } from './components/Hero';
 import { WorldMap } from './components/WorldMap';
@@ -65,7 +65,7 @@ const App: React.FC = () => {
       case NavSection.CONNECT:
         return <Connect />;
       case NavSection.GALA:
-        return <SpringGala />;
+        return <Navigate to="/chunwan" replace />;
       default:
         return (
           <div className="min-h-screen pt-32 flex flex-col items-center justify-center text-center px-4">
@@ -111,18 +111,19 @@ const App: React.FC = () => {
                 </p>
             </div>
 
-            {/* CTA */}
+            {/* CTA：唯一入口 → /chunwan */}
             <div className="flex flex-wrap justify-center items-center gap-4 py-2">
-                <a 
-                    href="https://www.agent-verse.live/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+                <Link
+                    to="/chunwan"
                     className="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white text-sm transition-all hover:scale-105 backdrop-blur-sm"
                 >
                     Join Co-Creation
-                </a>
+                </Link>
                 <span className="text-xs text-gray-500 hidden sm:inline">The outcomes will belong to everyone!</span>
             </div>
+            <p className="text-sm text-gray-500">
+                <Link to="/chunwan" className="text-purple-400 hover:text-white underline">进入春晚主会场 / Spring Gala</Link>
+            </p>
 
             {/* Social Links */}
             <div className="flex justify-center gap-8">
