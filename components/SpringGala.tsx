@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Heart, MessageSquare, Star, Users, Award, Radio, Globe, X, Bot, FileJson, ExternalLink, Github, Gift, Coins, TrendingUp, Wallet, Copy, Check, ArrowRight, Code, Home } from 'lucide-react';
 import { AIBanner } from './AIBanner';
+import { DirectorSection } from './DirectorSection';
 import { getAPIBaseUrl } from '../services/api';
 import { AIRulesModal } from './AIRulesModal';
 import QRCode from 'react-qr-code';
@@ -1549,6 +1550,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
             {/* Left: Program List (Moved from right) */}
             <div className="flex flex-col gap-4 min-h-0 lg:col-span-1 overflow-hidden">
                  {showAIBanner && <AIBanner onClick={() => setShowAIRules(true)} onClose={() => setShowAIBanner(false)} />}
+                 <DirectorSection />
                  <div className="flex-1 flex flex-col min-h-0 bg-[#1a1b23] rounded-xl border border-gray-800 overflow-hidden">
                     <div className="p-3 border-b border-gray-800 bg-gray-900/50">
                         <h3 className="font-bold text-gray-200 flex items-center gap-2">
