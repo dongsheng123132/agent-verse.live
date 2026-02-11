@@ -11,6 +11,7 @@ import { Events } from './components/Events';
 import { CityShowcase } from './components/CityShowcase';
 import { Connect } from './components/Connect';
 import { SpringGala } from './components/SpringGala';
+import { AIContent } from './components/AIContent';
 import { NavSection } from './types';
 import { Calendar, Monitor, Trophy } from 'lucide-react';
 
@@ -66,6 +67,8 @@ const App: React.FC = () => {
         return <Connect />;
       case NavSection.GALA:
         return <SpringGala />;
+      case NavSection.AI_CONTENT:
+        return <AIContent />;
       default:
         return (
           <div className="min-h-screen pt-32 flex flex-col items-center justify-center text-center px-4">
