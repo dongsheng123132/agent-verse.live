@@ -12,6 +12,7 @@ import { PointsCenter } from './components/PointsCenter';
 import { PredictionMarket } from './components/PredictionMarket';
 import { GlobalFuqiMap } from './components/GlobalFuqiMap';
 import { Connect } from './components/Connect';
+import { DailyBible } from './components/DailyBible';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -36,6 +37,9 @@ root.render(
           <Route path="/predictions" element={<PredictionMarket />} />
           <Route path="/map" element={<GlobalFuqiMap />} />
           <Route path="/connect" element={<Connect />} />
+          
+          {/* 隐藏页面 - 每日圣经 */}
+          <Route path="/daily-bible" element={<DailyBible />} />
           
           {/* 兜底路由 */}
           <Route path="*" element={<DashboardPage />} />
