@@ -30,10 +30,10 @@ const bibleVerses: BibleVerse[] = [
       zh: "箴言 3:5-6",
       en: "Proverbs 3:5-6"
     },
-    musicUrl: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1",
+    musicUrl: "https://www.youtube.com/embed/1EORb1WnGjk?autoplay=1",
     musicTitle: {
-      zh: "安静时刻",
-      en: "Peaceful Moment"
+      zh: "奇异恩典 - 经典圣诗",
+      en: "Amazing Grace - Classic Hymn"
     }
   },
   {
@@ -46,10 +46,10 @@ const bibleVerses: BibleVerse[] = [
       zh: "彼得前书 5:7",
       en: "1 Peter 5:7"
     },
-    musicUrl: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1",
+    musicUrl: "https://www.youtube.com/embed/8Z3Q3Jd3e0o?autoplay=1",
     musicTitle: {
-      zh: "平安",
-      en: "Peace"
+      zh: "你信实何广大 - 圣诗",
+      en: "Great Is Thy Faithfulness"
     }
   },
   {
@@ -62,10 +62,10 @@ const bibleVerses: BibleVerse[] = [
       zh: "诗篇 23:1-2",
       en: "Psalm 23:1-2"
     },
-    musicUrl: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1",
+    musicUrl: "https://www.youtube.com/embed/mIgS5p9O2Xw?autoplay=1",
     musicTitle: {
-      zh: "牧者之歌",
-      en: "Shepherd's Song"
+      zh: "主是我力量 - 敬拜诗歌",
+      en: "The Lord Is My Strength"
     }
   },
   {
@@ -78,10 +78,10 @@ const bibleVerses: BibleVerse[] = [
       zh: "腓立比书 4:6",
       en: "Philippians 4:6"
     },
-    musicUrl: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1",
+    musicUrl: "https://www.youtube.com/embed/6vG8M0X5z0Y?autoplay=1",
     musicTitle: {
-      zh: "感恩",
-      en: "Thanksgiving"
+      zh: "赞美之泉 - 敬拜音乐",
+      en: "River of Praise"
     }
   },
   {
@@ -94,10 +94,10 @@ const bibleVerses: BibleVerse[] = [
       zh: "提摩太后书 1:7",
       en: "2 Timothy 1:7"
     },
-    musicUrl: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1",
+    musicUrl: "https://www.youtube.com/embed/2b4f7v0X3zQ?autoplay=1",
     musicTitle: {
-      zh: "刚强",
-      en: "Strength"
+      zh: "刚强仁爱谨守的心 - 福音诗歌",
+      en: "Spirit of Power, Love & Sound Mind"
     }
   }
 ];
