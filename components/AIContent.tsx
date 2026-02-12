@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavSection } from '../types';
 import { Newspaper, BarChart, BookOpen, ExternalLink, Calendar, Tag as TagIcon, User, Download, Share2, Filter, Search } from 'lucide-react';
 import { Tag } from './Tag';
+import { articles } from '../data/articles';
 
 // 真实数据 - AI日报和Nad.Fun分析
 const mockArticles = [
@@ -64,10 +65,11 @@ const categories = [
 export const AIContent: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [articles, setArticles] = useState(mockArticles);
+  // 从持久化数据加载文章
+  const [articleList] = useState(articles);
 
   // 过滤文章
-  const filteredArticles = articles.filter(article => {
+  const filteredArticles = articleList.filter(article => {
     const matchesCategory = selectedCategory === 'all' || article.category === selectedCategory;
     const matchesSearch = searchQuery === '' || 
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -78,8 +80,8 @@ export const AIContent: React.FC = () => {
 
   // 获取分类文章数量
   const getCategoryCount = (categoryId: string) => {
-    if (categoryId === 'all') return articles.length;
-    return articles.filter(a => a.category === categoryId).length;
+    if (categoryId === 'all') return articleList.length;
+    return articleList.filter(a => a.category === categoryId).length;
   };
 
   // 处理文章点击
