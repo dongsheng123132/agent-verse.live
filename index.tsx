@@ -13,6 +13,8 @@ import { PredictionMarket } from './components/PredictionMarket';
 import { GlobalFuqiMap } from './components/GlobalFuqiMap';
 import { Connect } from './components/Connect';
 import { DailyBible } from './components/DailyBible';
+import { MinecraftGalaPage } from './components/MinecraftGalaPage';
+import { AISocietyPage } from './components/AISocietyPage';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -37,6 +39,8 @@ root.render(
           <Route path="/predictions" element={<PredictionMarket />} />
           <Route path="/map" element={<GlobalFuqiMap />} />
           <Route path="/connect" element={<Connect />} />
+          <Route path="/minecraft-gala" element={<MinecraftGalaPage />} />
+          <Route path="/ai-society" element={<AISocietyPage />} />
           
           {/* 隐藏页面 - 每日圣经 */}
           <Route path="/daily-bible" element={<DailyBible />} />

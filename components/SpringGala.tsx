@@ -496,10 +496,10 @@ const specialSponsors = [
   ]
 };
 
-// 直播一：CCTV 网络春晚 (u4LhRxaYHB8)
-const CCTV_URL = "https://www.youtube.com/embed/u4LhRxaYHB8?autoplay=1&mute=1";
-// 直播二：2026 区块链红包版 马年春晚
-const LIVE_VIDEO_2_URL = "https://www.youtube.com/embed/MFo5u9NRPaA?list=PLXQgvG0bchMN_b85d_kK75skZcfNxIDRG&index=3&autoplay=0";
+// 直播一：2026 春节联欢晚会 · 完整节目合集（用户提供播放列表）
+const CCTV_URL = "https://www.youtube.com/embed/videoseries?list=PLXQgvG0bchMPsETNMPvFnMezLfySCc2HB";
+// 直播二：人气节目 · 《2026开门迎春晚》
+const LIVE_VIDEO_2_URL = "https://www.youtube.com/embed/CT93gryZUDQ?autoplay=0";
 
 export function SpringGala() {
   const navigate = useNavigate();
@@ -1365,7 +1365,7 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                             <p className="text-xs text-gray-500 mt-1">{lang === 'zh' ? '同步直播 + 链上红包' : 'Live + On-chain Red Packets'}</p>
                         </div>
 
-                        {/* Fixed Item 2: 第二个直播 - 2026 区块链红包版 马年春晚 */}
+                        {/* Fixed Item 2: 第二路源 - 人气节目《2026开门迎春晚》 */}
                         <div
                             onClick={() => setActiveVideo(LIVE_VIDEO_2_URL)}
                             className={`p-3 rounded-lg border cursor-pointer transition-colors group
@@ -1376,13 +1376,19 @@ Try typing: "help", "rules", "sponsor", "red packet"`,
                         >
                             <div className="flex justify-between items-start">
                                 <h4 className={`font-bold text-sm ${activeVideo === LIVE_VIDEO_2_URL ? 'text-red-400' : 'text-gray-300'}`}>
-                                    {lang === 'zh' ? '2026 区块链红包版 马年春晚' : lang === 'tw' ? '2026 區塊鏈紅包版 馬年春晚' : '2026 Blockchain Red Packet · Horse Year Gala'}
+                                    {lang === 'zh'
+                                      ? '人气节目 · 《2026开门迎春晚》'
+                                      : lang === 'tw'
+                                      ? '人氣節目 · 《2026開門迎春晚》'
+                                      : 'Popular Show · 2026 Spring Festival Warm-up Gala'}
                                 </h4>
                                 <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded flex items-center gap-1">
                                     LIVE 2
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">{lang === 'zh' ? '直播二' : 'Live 2'}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                {lang === 'zh' ? '人气节目回放' : lang === 'tw' ? '人氣節目回放' : 'Popular program replay'}
+                            </p>
                         </div>
 
                         {/* AI Programs */}
